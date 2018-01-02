@@ -17,7 +17,10 @@ var media_routes = require('./api/routes/mediaRoutes'); //importing route
 media_routes(app); //register the route
 var feeds_routes = require('./api/routes/feedsRoutes'); //importing route
 feeds_routes(app); //register the route
-
+var search_routes = require('./api/routes/searchRoutes'); //importing route
+search_routes(app); //register the route
+var tag_routes = require('./api/routes/tagsRoutes'); //importing route
+tag_routes(app); //register the route
 
 app.listen(port);
 

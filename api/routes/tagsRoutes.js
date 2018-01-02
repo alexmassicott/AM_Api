@@ -1,8 +1,16 @@
-const Upload = require('../controllers/upload')
-const multipart = require('connect-multiparty')
-const multipartMiddleware = multipart()
-module.exports = (app) => {
-// API Server Endpoints
-    app.get('/', Upload.displayForm)
-    app.post('/upload', multipartMiddleware, Upload.upload)
-}
+'use strict';
+module.exports = function(app) {
+  var todoList = require('../controllers/tagsController');
+
+  // todoList Routes
+  app.route('/tags/show.json')
+    .get(todoList.get_tags);
+
+
+    app.route('/tags/create.json')
+      .post(todoList.create_tag);
+
+      app.route('/tags/delete.json')
+        .post(todoList.delete_a_tag);
+
+};
