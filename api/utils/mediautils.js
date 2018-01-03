@@ -1,13 +1,13 @@
 /*Expressions for AWS
 */
 var moment=require('moment');
+let ddbutil=require('ddbutil');
 
 const putBase64Params=(bucketName,url,image,filetype)=>(
   {
         Bucket: bucketName,
         Key: url,
         Body: image,
-        ContentEncoding: 'base64',
         ContentType: 'image/'+filetype
 });
 
@@ -176,9 +176,8 @@ function updateCropData(_id, _size, _cd, docClient){
 
 }
 
-function updateOriginalData(req, res, _status, docClient){
-  describe('add()', function() {
-    it('correctly adds ', function() {
+function updateOriginalData(req, res, _status, docClient, metadata){
+
   let _lom;
   let _pid;
   var params1 = {
@@ -194,8 +193,8 @@ function updateOriginalData(req, res, _status, docClient){
 
 
   ddbutil.get(docClient,params1)
-  .then((data)=>{
-    _pid=data.Item.post_id;
+  .then((Item)=>{
+    _pid=Item.post_id;
     var params = {
       TableName: "Posts",
       Key: {
@@ -215,8 +214,8 @@ function updateOriginalData(req, res, _status, docClient){
         return mo[0];
     })
     .then((mo)=>{
-
-      mo.original_data=req.body.metadata;
+      delete metadata.buffer;
+      mo.original_data=metadata;
       mo.status=_status;
       mo.number_of_changes+=1;
       mo.edit_timestamp = moment().unix();
@@ -238,13 +237,11 @@ function updateOriginalData(req, res, _status, docClient){
    .then(()=>{res.json({"status": "success"})})
    .catch(function(err) {
      console.log(err);
-     res.status(404).json({
+     res.status(500).json({
        status:'error',
        message: err});
      });
 
-   });
- }); 
 
 }
 module.exports={

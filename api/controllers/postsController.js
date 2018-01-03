@@ -130,7 +130,7 @@ function getUpdatepostParams(req) {
   }
   if (req.redirect_link) {
     data.ExpressionAttributeNames["#Red_Link"] = "redirect_link";
-    data.ExpressionAttributeValues[":red_link"] = req.new_link;
+    data.ExpressionAttributeValues[":red_link"] = req.redirect_link;
     data.UpdateExpression += ",#Red_Link = :red_link";
   }
   if (req.new_publication_status) {

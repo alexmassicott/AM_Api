@@ -33,21 +33,24 @@ var dstBucket = bucketName + "-output";
 function updatemedia(req, res) {
 
   let post_id;
-  if (req.body.image && req.body.id && req.body.metadata && req.body.action == "upload") {
-
-    var b64string = req.body.image;
-    image = new Buffer(b64string.replace(/^data:image\/\w+;base64,/, ""), 'base64');
-    var originalFilename = req.body.metadata.originalFilename;
+  if (req.files["image"][0] && req.body.id && req.body.action == "upload") {
+    console.log("i'm in this bitch")
+    image = req.files["image"][0];
+    var originalFilename = req.files["image"][0].originalname;
     typeMatch = originalFilename.match(/\.([^.]*)$/);
     filetype = typeMatch[1].toLowerCase();
     imageName =  req.body.id;
     var url = 'images/' + `${imageName}` + "." + filetype;
-    req.body.metadata.url = url;
-    var b64params = putBase64Params(bucketName, url, image, filetype);
-
-    s3.putObject(b64params, function(err, data) {
-      if (err) callback(null, err);
-      updateOriginalData(req, res, "pending",  docClient);
+    let s3params =  {
+            Bucket: bucketName,
+            Key: url,
+            Body: req.files["image"][0].buffer,
+            ContentType: 'image/'+filetype
+    };
+    s3.putObject(s3params, function(err, data) {
+      if (err) res.status(500).send({status:"error", message:"something happened with s3"});
+      console.log("hi");
+      updateOriginalData(req, res, "complete",  docClient, req.files["image"][0]);
 
     });
 
@@ -167,7 +170,7 @@ function updatemedia(req, res) {
       }, (err, result) => {
         if (err) {
            console.log(err);
-           res.status(404).json({
+           res.status(500).send({
              status:'error',
              message: err})
 
@@ -180,7 +183,7 @@ function updatemedia(req, res) {
     }
   } else {
     // Request wasn't supplied information it needs to make updates
-    res.status(404).json({
+    res.status(500).send({
       status:'error',
       message: "Missing parameters required to make task"})
 
@@ -236,7 +239,7 @@ function createmedia(req,res){
      })
      .catch((err)=> {
        console.log(err);
-       res.status(404).json({
+       res.status(500).send({
          status:'error',
          message: "Internal Error"})
        });
@@ -337,9 +340,16 @@ ddbutil.delete(docClient,params).then((data) => {
 }
 
 exports.update_a_media = function (req,res){
-  if (req.body.id)updatemedia(req,res)
+  console.log(req.body);
+  console.log(req.files['image'][0]);
+
+  if (req.body.id){
+    updatemedia(req,res)
+    let formData = req.body;
+    console.log('form data', formData);
+  }
   else {
-  res.status(404).json({
+  res.status(500).send({
     status:'error',
     message: "media parameter"})
   }
@@ -349,7 +359,7 @@ exports.update_a_media = function (req,res){
 exports.create_a_media = function (req,res){
   if (req.body.post_id)createmedia(req,res)
   else {
-  res.status(404).json({
+  res.status(500).send({
     status:'error',
     message: "media id was not specified"})
   }
@@ -358,7 +368,7 @@ exports.create_a_media = function (req,res){
 exports.delete_a_media = function (req,res){
   if (req.body.id)deletemedia(req,res)
   else {
-  res.status(404).json({
+  res.status(500).send({
     status:'error',
     message: "media id was not specified"});
   }
@@ -367,7 +377,7 @@ exports.delete_a_media = function (req,res){
 exports.show_media = function(req, res) {
      if(req.query.post_id)get_a_media(req,res)
      else{
-     res.status(404).json({
+     res.status(500).send({
        status:'error',
        message:'no post id specified'})
    }
