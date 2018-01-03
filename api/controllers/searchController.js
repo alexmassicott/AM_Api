@@ -14,7 +14,7 @@ let docClient = new AWS.DynamoDB.DocumentClient({
 //////////////
 function getsearch(req,res){
 
-  var query=req.query.query.split(",");
+var query=req.query.query.split(",");
 var queryItems=[];
 var params = {
   RequestItems: {

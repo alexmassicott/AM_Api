@@ -11,7 +11,7 @@ module.exports = function(app) {
   app.route('/posts/update.json')
       .post(todoList.update_a_post);
 
-  app.route('/posts/delete.json')
+  app.route('/posts/destroy.json')
       .post(todoList.delete_a_post);
 
   app.route('/posts/create.json')

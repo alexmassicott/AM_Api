@@ -2,9 +2,20 @@
   cors = require('cors')
   app = express(),
   port = process.env.PORT || 3000,
-  bodyParser = require('body-parser');
-  var assert = require('assert');
-// mongoose instance connection url connection
+  bodyParser = require('body-parser'),
+  jwt = require('express-jwt'),
+  jwks = require('jwks-rsa'),
+  jwtCheck = jwt({
+      secret: jwks.expressJwtSecret({
+          cache: true,
+          rateLimit: true,
+          jwksRequestsPerMinute: 5,
+          jwksUri: "https://alexandermassicott.auth0.com/.well-known/jwks.json"
+      }),
+      audience: 'https://api.alexandermassicott.com',
+      issuer: "https://alexandermassicott.auth0.com/",
+      algorithms: ['RS256']
+  });
 
 
 // app.use(bodyParser.urlencoded({ extended: true }));
@@ -22,9 +33,21 @@ search_routes(app); //register the route
 var tag_routes = require('./api/routes/tagsRoutes'); //importing route
 tag_routes(app); //register the route
 
-app.listen(port);
+// app.use(jwtCheck);
+app.get('/authorized', function (req, res) {
+  res.send('Secured Resource');
+});
+app.use(function (err, req, res, next) {
+  if (err.name === 'UnauthorizedError') {
+    res.status(401).send({status:"error",message:'invalid token...'});
+  }
+});
 
 app.use(function(req, res) {
   res.status(404).send({url: req.originalUrl + ' not found'})
 });
+
+
+app.listen(port);
+
 console.log('API server started on: ' + port);

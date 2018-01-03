@@ -177,7 +177,8 @@ function updateCropData(_id, _size, _cd, docClient){
 }
 
 function updateOriginalData(req, res, _status, docClient){
-
+  describe('add()', function() {
+    it('correctly adds ', function() {
   let _lom;
   let _pid;
   var params1 = {
@@ -241,6 +242,9 @@ function updateOriginalData(req, res, _status, docClient){
        status:'error',
        message: err});
      });
+
+   });
+ }); 
 
 }
 module.exports={

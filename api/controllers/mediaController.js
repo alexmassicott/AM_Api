@@ -34,6 +34,7 @@ function updatemedia(req, res) {
 
   let post_id;
   if (req.body.image && req.body.id && req.body.metadata && req.body.action == "upload") {
+
     var b64string = req.body.image;
     image = new Buffer(b64string.replace(/^data:image\/\w+;base64,/, ""), 'base64');
     var originalFilename = req.body.metadata.originalFilename;

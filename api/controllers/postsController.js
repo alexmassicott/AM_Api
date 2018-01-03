@@ -64,7 +64,7 @@ function get_a_type(req,res) {
   let type = req.query.type;
   const queryParams = {
       TableName: tablename,
-      IndexName: "type-creation_timestamp-index",
+      IndexName: "type-publication_status-index",
       ExpressionAttributeNames: {
       "#q": "type"
     },
@@ -103,7 +103,6 @@ function getUpdatepostParams(req) {
     ExpressionAttributeValues: {},
     UpdateExpression: {}
   };
-  console.log(req);
   data.Key={ "id" : req.id };
   data.TableName=tablename;
   data.ExpressionAttributeNames["#Edit"] = "edit_timestamp";
@@ -129,6 +128,11 @@ function getUpdatepostParams(req) {
     data.ExpressionAttributeValues[":link"] = req.new_link;
     data.UpdateExpression += ",#Link = :link";
   }
+  if (req.redirect_link) {
+    data.ExpressionAttributeNames["#Red_Link"] = "redirect_link";
+    data.ExpressionAttributeValues[":red_link"] = req.new_link;
+    data.UpdateExpression += ",#Red_Link = :red_link";
+  }
   if (req.new_publication_status) {
     data.ExpressionAttributeNames["#Ps"] = "publication_status";
     data.ExpressionAttributeValues[":status"] = req.new_publication_status;
@@ -146,9 +150,11 @@ function getUpdatepostParams(req) {
 }
 
 exports.create_a_post = function(req, res) {
+  console.log("creating");
+  console.log(req.body.type);
   if(req.body.type)createpost(req,res);
   else{
-    res.status(404).json({
+    res.status(500).send({
       status:'error',
       message:"no type specified"});
   }
@@ -161,12 +167,12 @@ function createpost(req,res){
      var timestamp=moment().unix();
      var mediaobj={"id" :mediaid, "post_id" :postid, "creation_timestamp": timestamp,"edit_timestamp" : timestamp, "status": "new", "number_of_changes": 0,
              "data":{
-                   "1x1":{"status":"new","number_of_changes":0},
-                   "1x2":{"status":"new","number_of_changes":0},
-                   "3x2":{"status":"new","number_of_changes":0},
-                   "2x1":{"status":"new","number_of_changes":0},
-                   "3x1":{"status":"new","number_of_changes":0},
-                   "16x9":{"status":"new","number_of_changes":0}
+                   "1x1":{"status":"new","number_of_changes":0,"crop":{"x":0,"y":0,"width":0,"height":0}},
+                   "1x2":{"status":"new","number_of_changes":0,"crop":{"x":0,"y":0,"width":0,"height":0}},
+                   "2x1":{"status":"new","number_of_changes":0,"crop":{"x":0,"y":0,"width":0,"height":0}},
+                   "3x2":{"status":"new","number_of_changes":0,"crop":{"x":0,"y":0,"width":0,"height":0}},
+                   "3x1":{"status":"new","number_of_changes":0,"crop":{"x":0,"y":0,"width":0,"height":0}},
+                   "16x9":{"status":"new","number_of_changes":0,"crop":{"x":0,"y":0,"width":0,"height":0}}
                }
              }
 
@@ -181,8 +187,8 @@ function createpost(req,res){
                    "creation_timestamp": timestamp,
                    "featured": false,
                    "edit_timestamp" : timestamp,
-                   "publication_status":"draft"
-
+                   "publication_status":"draft_in_progress",
+                   "summary":"&nbsp;"
                   }
                 }
               }],
@@ -196,7 +202,8 @@ function createpost(req,res){
 
 
   docClient.batchWrite(params, function(err, data) {
-      if (err)return res.status(404).json({status:'error',message:err});
+    console.log(err);
+      if (err)return res.status(500).send({status:'error',message:err});
       else{
         res.json({"status":"success","id":postid,"mediaid":mediaid});
       }
@@ -205,18 +212,20 @@ function createpost(req,res){
 }
 
 function deletepost(req,res){
+  console.log("deleting");
   let post_id=req.body.id;
   let params = {
      TableName: tablename,
      Key: {
        "id": post_id
      },
+     ReturnValues:"ALL_OLD"
    };
-
-   ddbutil.delete(docClient, params).then(()=>res.send({status:"success"}))
+   //To do: Delete all media objects for posts, you could delete S3 objects too if you wanna get fancy
+   ddbutil.delete(docClient, params).then(()=>res.json({status:"success"}))
    .catch((err)=>{
      console.log(err);
-     res.status(404).json({
+     res.status(500).send({
        status:'error',
        message:err})
    });
@@ -240,7 +249,7 @@ exports.update_a_post = function(req, res) {
 });
   }
   else{
-    res.status(404).json({
+    res.status(500).send({
       status:'error',
       message:"no id specified"})
   }
@@ -248,9 +257,10 @@ exports.update_a_post = function(req, res) {
 
 
 exports.delete_a_post = function(req, res) {
+  console.log("yo its that dirty");
   if(req.body.id)deletepost(req,res);
   else{
-   res.status(404).json({
+   res.status(500).send({
      status:'error',
      message:"no id specified"})
  }
@@ -262,7 +272,7 @@ exports.show_posts = function(req, res) {
   if(req.query.id)get_a_post(req,res);
   else if(req.query.type)get_a_type(req,res)
   else{
-  res.status(404).json({
+  res.status(500).send({
     status:'error',
     message:'no type or id specified'
 })

@@ -44,7 +44,6 @@ function gettags(req,res){
   };
   ddbutil.scan(docClient,params)
   .then((items)=>{
-   console.log(items);
     res.json({ "status":"success", "data" : { "tags" : items }});
 
   }).catch((err)=>{
