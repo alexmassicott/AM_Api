@@ -63,6 +63,7 @@ function cropmedia(req,res){
 
 
     let post_id;
+    let cropdata;
     console.log("crop life");
     imageName = req.body.id;
     let params={
@@ -90,9 +91,8 @@ function cropmedia(req,res){
         ProjectionExpression:"#n"
       };
       // let getPostLOM=docClient.get(params).promise();
-      return Promise.resolve(ddbutil.get(docClient,params))
-      })
-      .then((data)=>{
+      return Promise.resolve(ddbutil.get(docClient,params))})
+      .then(data=>{
         console.log(data.Item.list_of_media);
         let mo = data.Item.list_of_media.filter(function(a){return a.id==req.body.id});
         if (mo[0].original_data) {
@@ -103,8 +103,9 @@ function cropmedia(req,res){
           typeMatch = srcKey.match(/\.([^.]*)$/);
           filetype = typeMatch[1].toLowerCase();
           cropImage();
-        }
-        }).catch(function(err) {
+        }else throw ("Couldn't find original image for media object");
+      },err=>{throw err})
+      .catch(function(err) {
       console.log(err);
       res.status(500).send({
         status:'error',
@@ -129,7 +130,7 @@ function cropmedia(req,res){
           },
           function processImage(response, next) {
 
-            console.log("cropping image");
+            console.log("cropping data x is "+req.body.crop_data[0].x);
             let cropdataparse=req.body.crop_data[1].split(",");
             let width = parseInt(cropdataparse[2]);
             let height = parseInt(cropdataparse[3]);
@@ -138,18 +139,14 @@ function cropmedia(req,res){
 
             gm(response.Body, imageName + "." + filetype).crop(width, height, x, y).toBuffer(
               filetype.toUpperCase(),
-              function(err,
-                buffer) {
-                if (err) {
-                  next(err);
-                } else {
+              function(err,buffer) {
+                if (err) throw err;
 
-                    tinify.fromBuffer(buffer).toBuffer(function(err, resultData) {
-                        if (err) console.log(err);
-    // ...
+                tinify.fromBuffer(buffer).toBuffer(function(err, resultData) {
+                  if (err) throw err;
 
                   gm(resultData).filesize(function(err, filesize) {
-                    if(err)console.log(err);
+                    if(err)throw err;
                     console.log("crop data");
                     var bytesize = filesize.split("B");
                     var _filesize = Math.floor(parseInt(bytesize[0]) / 1000) + "kb";
@@ -169,9 +166,8 @@ function cropmedia(req,res){
                     updateCropData(req.body.id, value, cropdata,docClient); //
                     next(null, buffer);
                   });
-             });
+                  });
 
-                }
               });
 
           },
@@ -186,9 +182,7 @@ function cropmedia(req,res){
 
           }
         ], (err, result) => {
-          if (err) {
-            console.error(err);
-          }
+          if (err) throw err;
           // result now equals 'done'
           console.log("End of step " + value);
           cb();
