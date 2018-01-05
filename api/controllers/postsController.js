@@ -138,11 +138,9 @@ function getUpdatepostParams(req) {
     data.ExpressionAttributeValues[":status"] = req.new_publication_status;
     data.UpdateExpression += ",#Ps = :status";
   }
-  if (req.new_featured=="true" || req.new_featured=="false") {
-    let val=false;
-    if(req.new_featured=="true")val=true;
+  if (req.new_featured===true || req.new_featured===false) {
     data.ExpressionAttributeNames["#Feat"] = "featured";
-    data.ExpressionAttributeValues[":featured"] = val;
+    data.ExpressionAttributeValues[":featured"] = req.new_featured;
     data.UpdateExpression += ",#Feat = :featured";
   }
   data.ReturnValues="ALL_NEW";

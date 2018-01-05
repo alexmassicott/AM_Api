@@ -32,33 +32,51 @@ var dstBucket = bucketName + "-output";
 
 function updatemedia(req, res) {
 
-  let post_id;
-  if (req.files["image"][0] && req.body.id && req.body.action == "upload") {
     console.log("i'm in this bitch")
-    image = req.files["image"][0];
-    var originalFilename = req.files["image"][0].originalname;
-    typeMatch = originalFilename.match(/\.([^.]*)$/);
+    image = req.files["file_data"][0];
+    typeMatch = req.files["file_data"][0].originalname.match(/\.([^.]*)$/);
     filetype = typeMatch[1].toLowerCase();
     imageName =  req.body.id;
     var url = 'images/' + `${imageName}` + "." + filetype;
-    let s3params =  {
-            Bucket: bucketName,
-            Key: url,
-            Body: req.files["image"][0].buffer,
-            ContentType: 'image/'+filetype
-    };
-    s3.putObject(s3params, function(err, data) {
-      if (err) res.status(500).send({status:"error", message:"something happened with s3"});
-      console.log("hi");
-      updateOriginalData(req, res, "complete",  docClient, req.files["image"][0]);
+    var metadata=_.pick(req.files["file_data"][0], ['originalname', 'size','mimetype','encoding']);
+    metadata.url=url;
 
-    });
+    tinify.fromBuffer(req.files["file_data"][0].buffer).toBuffer(function(err, resultData) {
+        if (err) console.log(err);
+        let s3params =  {
+                Bucket: bucketName,
+                Key: url,
+                Body: resultData,
+                ContentType: 'image/'+filetype
+        };
+        s3.putObject(s3params, function(err, data) {
+          if (err) res.status(500).send({status:"error", message:"something happened with s3"});
+          updateOriginalData(req, res, "complete",  docClient, metadata);
 
-  } else if (req.body.action == "crop" && req.body.id) {
+        });
+      });
 
+};
+
+
+function cropmedia(req,res){
+
+
+    let post_id;
+    console.log("crop life");
     imageName = req.body.id;
-    var getPostId = docClient.get(getMediaData(req.body.id)).promise();
-    getPostId.then((data) => {
+    let params={
+      TableName: "mediaobjects",
+      Key: {
+          "id": req.body.id
+      },
+      ProjectionExpression:"original_data,post_id"
+    };
+
+    ddbutil.get(docClient,params)
+    .then((data) => {
+      console.log("hi");
+
       post_id = data.Item.post_id;
 
       var params = {
@@ -71,20 +89,26 @@ function updatemedia(req, res) {
          },
         ProjectionExpression:"#n"
       };
-      let getPostLOM=docClient.get(params).promise();
-      getPostLOM.then((data)=>((data.Item.list_of_media)))
+      // let getPostLOM=docClient.get(params).promise();
+      return Promise.resolve(ddbutil.get(docClient,params))
+      })
       .then((data)=>{
-        let mo = data.filter(function(a){return a.id==req.body.id});
+        console.log(data.Item.list_of_media);
+        let mo = data.Item.list_of_media.filter(function(a){return a.id==req.body.id});
         if (mo[0].original_data) {
+          console.log("yea boy")
           srcKey = mo[0].original_data.url;
+          console.log("srcKey is" +srcKey);
+
           typeMatch = srcKey.match(/\.([^.]*)$/);
           filetype = typeMatch[1].toLowerCase();
           cropImage();
         }
-      });
-
-    }).catch(function(err) {
+        }).catch(function(err) {
       console.log(err);
+      res.status(500).send({
+        status:'error',
+        message: err})
     });
     var _sizeArray = [req.body.crop_ratio];
     const cropImage = () => {
@@ -105,11 +129,12 @@ function updatemedia(req, res) {
           },
           function processImage(response, next) {
 
-
-            var width = parseInt(req.body.crop_data.width);
-            var height = parseInt(req.body.crop_data.height);
-            var x = parseInt(req.body.crop_data.x);
-            var y = parseInt(req.body.crop_data.y);
+            console.log("cropping image");
+            let cropdataparse=req.body.crop_data[1].split(",");
+            let width = parseInt(cropdataparse[2]);
+            let height = parseInt(cropdataparse[3]);
+            let x = parseInt(cropdataparse[0]);
+            let y = parseInt(cropdataparse[1]);
 
             gm(response.Body, imageName + "." + filetype).crop(width, height, x, y).toBuffer(
               filetype.toUpperCase(),
@@ -124,6 +149,7 @@ function updatemedia(req, res) {
     // ...
 
                   gm(resultData).filesize(function(err, filesize) {
+                    if(err)console.log(err);
                     console.log("crop data");
                     var bytesize = filesize.split("B");
                     var _filesize = Math.floor(parseInt(bytesize[0]) / 1000) + "kb";
@@ -140,7 +166,7 @@ function updatemedia(req, res) {
                       "url": 'images/' + `${imageName}` + "." + _sizeArray[key] + "." + filetype,
                       "status": "processed"
                     };
-                    updateCropData(req.body.id, value, cropdata); //
+                    updateCropData(req.body.id, value, cropdata,docClient); //
                     next(null, buffer);
                   });
              });
@@ -164,7 +190,7 @@ function updatemedia(req, res) {
             console.error(err);
           }
           // result now equals 'done'
-          console.log("End of step " + key);
+          console.log("End of step " + value);
           cb();
         });
       }, (err, result) => {
@@ -181,14 +207,9 @@ function updatemedia(req, res) {
         });
       })
     }
-  } else {
-    // Request wasn't supplied information it needs to make updates
-    res.status(500).send({
-      status:'error',
-      message: "Missing parameters required to make task"})
 
-  }
-};
+}
+
 
 
 function createmedia(req,res){
@@ -244,9 +265,54 @@ function createmedia(req,res){
          message: "Internal Error"})
        });
 }
-
-
 function get_a_media(req,res){
+  let id = req.query.id;
+  let params = {
+    TableName: "mediaobjects",
+    Key: {
+        "id": id
+    },
+    ExpressionAttributeNames: {
+         "#pid": "post_id",
+     },
+    ProjectionExpression:"#pid"
+    };
+
+  ddbutil.get(docClient, params).then((data) => {
+    let params = {
+      TableName: "Posts",
+      Key: {
+          "id": data.Item.post_id
+      },
+      ExpressionAttributeNames: {
+           "#n": "list_of_media",
+       },
+      ProjectionExpression:"#n"
+    };
+    // getPostLOM=docClient.get(params).promise();
+    return Promise.resolve(ddbutil.get(docClient,params))
+    })
+    .then((data)=>{
+      _lom=data.Item.list_of_media;
+      let mo = _lom.filter(function(a){return a.id==id});
+
+    res.json({
+      "status": "success",
+      "data": {
+        "media": mo[0]
+      }});
+
+  }).catch((err) => {
+    console.log(err);
+    res.status(404).json({
+      status: 'error',
+      message: err
+    });
+  });
+}
+
+function get_medialist(req,res){
+  console.log("in list");
   let post_id = req.query.post_id;
   let params = getPostLom(post_id);
 
@@ -333,7 +399,7 @@ ddbutil.delete(docClient,params).then((data) => {
     res.json({"status" : "success"});
   }).catch((err) => {
     console.log(err);
-    res.status(404).json({
+    res.status(500).json({
       status:'error',
       message: "Internal error"});
     });
@@ -341,13 +407,8 @@ ddbutil.delete(docClient,params).then((data) => {
 
 exports.update_a_media = function (req,res){
   console.log(req.body);
-  console.log(req.files['image'][0]);
-
-  if (req.body.id){
-    updatemedia(req,res)
-    let formData = req.body;
-    console.log('form data', formData);
-  }
+  if (req.body.action=="upload")updatemedia(req,res);
+  else if(req.body.action=="crop")cropmedia(req,res)
   else {
   res.status(500).send({
     status:'error',
@@ -375,10 +436,12 @@ exports.delete_a_media = function (req,res){
 }
 
 exports.show_media = function(req, res) {
-     if(req.query.post_id)get_a_media(req,res)
+  console.log("show media");
+     if(req.query.post_id)get_medialist(req,res);
+     else if(req.query.id)get_a_media(req,res);
      else{
      res.status(500).send({
        status:'error',
-       message:'no post id specified'})
+       message:'no post id or media id specified'})
    }
 };
