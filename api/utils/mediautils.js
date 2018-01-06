@@ -62,7 +62,6 @@ const getUpdatePostExpressions = (key,lom)  =>{
   data.ExpressionAttributeNames["#lom"] = "list_of_media";
   data.ExpressionAttributeValues[":lom"] = lom;
   data.UpdateExpression = "SET #lom=:lom";
-  data.ReturnValues="ALL_NEW";
   return data;
 
 };
@@ -84,7 +83,7 @@ function updateCropData(_id, _size, _cd, docClient){
     ProjectionExpression:"#pid"
     };
 
-  ddbutil.get(docClient,params1)
+  return ddbutil.get(docClient,params1)
   .then((data)=>{
     _pid=data.Item.post_id;
     let params = {
@@ -119,11 +118,7 @@ function updateCropData(_id, _size, _cd, docClient){
       var params2 = getUpdatePostExpressions(_pid, _lom);
       return Promise.resolve(ddbutil.update(docClient,params2));
       })
-      .then(res=>{console.log(res)},
-        err=>{throw err})
-      .catch(function(err) {
-        console.log(err);
-      });
+
 
 }
 

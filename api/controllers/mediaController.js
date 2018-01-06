@@ -130,28 +130,26 @@ function cropmedia(req,res){
           },
           function processImage(response, next) {
 
-            console.log("cropping data x is "+req.body.crop_data[0].x);
-            let cropdataparse=req.body.crop_data[1].split(",");
-            let width = parseInt(cropdataparse[2]);
-            let height = parseInt(cropdataparse[3]);
+            let cropdataparse=req.body.crop_data.split(",");
+
             let x = parseInt(cropdataparse[0]);
             let y = parseInt(cropdataparse[1]);
-
+            let width = parseInt(cropdataparse[2]);
+            let height = parseInt(cropdataparse[3]);
             gm(response.Body, imageName + "." + filetype).crop(width, height, x, y).toBuffer(
               filetype.toUpperCase(),
               function(err,buffer) {
-                if (err) throw err;
+                if (err)return next(err);
 
                 tinify.fromBuffer(buffer).toBuffer(function(err, resultData) {
-                  if (err) throw err;
+                  if (err) next(err);
 
                   gm(resultData).filesize(function(err, filesize) {
-                    if(err)throw err;
-                    console.log("crop data");
+                    if(err)next(err);
                     var bytesize = filesize.split("B");
                     var _filesize = Math.floor(parseInt(bytesize[0]) / 1000) + "kb";
 
-                    var cropdata = {
+                    cropdata = {
                       "extension": filetype,
                       "file_size": _filesize,
                       "crop": {
@@ -163,7 +161,6 @@ function cropmedia(req,res){
                       "url": 'images/' + `${imageName}` + "." + _sizeArray[key] + "." + filetype,
                       "status": "processed"
                     };
-                    updateCropData(req.body.id, value, cropdata,docClient); //
                     next(null, buffer);
                   });
                   });
@@ -182,23 +179,39 @@ function cropmedia(req,res){
 
           }
         ], (err, result) => {
-          if (err) throw err;
-          // result now equals 'done'
+          if (err) {
+            console.log(err);
+            res.status(500).send({
+              status:'error',
+              message: err.message});
+          }
+          else{
           console.log("End of step " + value);
           cb();
+        }
         });
       }, (err, result) => {
         if (err) {
            console.log(err);
            res.status(500).send({
              status:'error',
-             message: err})
-
+             message: err.message});
         }
-        console.log("success");
-        res.json({
-          "status": "success"
+
+        updateCropData(req.body.id, req.body.crop_ratio, cropdata,docClient) //
+        .then(()=>{
+          console.log("success");
+          res.json({
+            "status": "success"
+          });
+        },err=>{throw err})
+        .catch(err=>{
+          console.log(err);
+          res.status(500).send({
+            status:'error',
+            message: err})
         });
+
       })
     }
 
@@ -288,19 +301,19 @@ function get_a_media(req,res){
     })
     .then((data)=>{
       _lom=data.Item.list_of_media;
-      let mo = _lom.filter(function(a){return a.id==id});
+      let mo = _lom.filter(function(a){return a.id==id})[0];
 
     res.json({
       "status": "success",
       "data": {
-        "media": mo[0]
+        "media": mo
       }});
 
   }).catch((err) => {
     console.log(err);
-    res.status(404).json({
+    res.status(500).send({
       status: 'error',
-      message: err
+      message: err.message
     });
   });
 }
@@ -339,9 +352,9 @@ function get_medialist(req,res){
 
   }).catch((err) => {
     console.log(err);
-    res.status(404).json({
+    res.status(500).send({
       status: 'error',
-      message: err
+      message: err.message
     });
   });
 }
