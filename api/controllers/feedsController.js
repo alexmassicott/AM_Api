@@ -1,35 +1,14 @@
 'use strict';
-let AWS = require('aws-sdk');
-AWS.config.loadFromPath("config.js");
-let https = require('https');
-let ddbutil=require('ddbutil');
-let agent = new https.Agent({
-   keepAlive: true
-});
-let docClient = new AWS.DynamoDB.DocumentClient({
-   httpOptions:{
-      agent: agent
-   }});
+let dynamoose = require('dynamoose');
+let Posts = dynamoose.model('Posts');
+
 //////////////
 function getfeeds(req,res){
   // ["work", "showcase", "news"]
   var count=0;
 const promises = req.query.feed.reduce((acc, type) => {
-  let params = {
-     "TableName": "Posts",
-     "IndexName": "type-publication_status-index",
-     "ExpressionAttributeNames": {
-       "#q": "type",
-       "#ps":"publication_status"
-     },
-     "KeyConditionExpression": "#q = :v1 AND #ps = :ps",
-     "ExpressionAttributeValues": {
-       ":v1": type,
-       ":ps":"draft_in_progress"
-     }
-   };
 
-  acc.push(Promise.resolve(ddbutil.query(docClient,params)));
+  acc.push(Promise.resolve(Posts.query('type').eq(type).where("publication_status").eq("draft_in_progress").exec()));
 
   return acc;
 }, []);
@@ -58,7 +37,7 @@ const promises = req.query.feed.reduce((acc, type) => {
     });
   }
     res.json({status:"success",data:{ posts : feed}})
-  });
+  }).catch(err=>{console.log(err)})
 
 
 }
@@ -68,7 +47,7 @@ const promises = req.query.feed.reduce((acc, type) => {
 exports.get_feed = function(req, res) {
   if (req.query.feed)getfeeds(req, res);
   else {
-    res.status(404).json({
+    res.status(500).send({
       status: 'error',
       message: 'no type or id specified'
     })

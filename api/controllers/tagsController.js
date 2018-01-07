@@ -1,54 +1,43 @@
 'use strict';
-let AWS = require('aws-sdk');
-AWS.config.loadFromPath("config.js");
-let https = require('https');
-let ddbutil=require('ddbutil');
-let moment = require('moment');
-let agent = new https.Agent({
-   keepAlive: true
-});
-let docClient = new AWS.DynamoDB.DocumentClient({
-   httpOptions:{
-      agent: agent
-   }});
+let dynamoose = require('dynamoose');
+let Tags = dynamoose.model('Tags');
+
 //////////////
 function deletetag(req,res){
+  Tags.delete({name:req.body.name}).then(()=>{
+    res.json({ "status" : "success" , "name" : req.body.name })})
+    .catch((err)=>{
+      console.log(err);
+      res.status(500).send({
+        status: 'error',
+        message: "There was a error"
+      })
+    });
 
 }
 
 function createtag(req,res){
 
-  var tagobj={
-      "name": req.body.name,
-      "creation_timestamp": moment().unix(),
-      "type":"tag"
-    };
-
-    var params = {
-      TableName: "Tags",
-      Item: tagobj
-    };
-    ddbutil.put(docClient,params).then(
-      res.json({ "status" : "success" , "name" : req.body.name }));
+    Tags.create(tagobj).then(()=>{
+      res.json({ "status" : "success" , "name" : req.body.name })})
+      .catch((err)=>{
+        console.log(err);
+        res.status(500).send({
+          status: 'error',
+          message: "There was a error"
+        })
+      });
 
 }
 
 function gettags(req,res){
-  var params = {
-    TableName: "Tags",
-    ProjectionExpression: "#n",
-    ExpressionAttributeNames: {
-         "#n": "name",
-     }
 
-  };
-  ddbutil.scan(docClient,params)
+  Tags.scan().attributes(["name"]).exec()
   .then((items)=>{
     res.json({ "status":"success", "data" : { "tags" : items }});
-
   }).catch((err)=>{
     console.log(err);
-    res.status(404).json({
+    res.status(500).send({
       status: 'error',
       message: "There was a error"
     })
@@ -58,7 +47,7 @@ function gettags(req,res){
 exports.delete_a_tag = function(req, res) {
   if (req.body.name)deletetag(req, res);
   else {
-    res.status(404).json({
+    res.status(500).send({
       status: 'error',
       message: 'no name specified'
     })
@@ -68,7 +57,7 @@ exports.delete_a_tag = function(req, res) {
 exports.create_tag = function(req, res) {
   if (req.body.name)createtag(req, res);
   else {
-    res.status(404).json({
+    res.status(500).json({
       status: 'error',
       message: 'no name specified'
     })

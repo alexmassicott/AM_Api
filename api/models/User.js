@@ -3,16 +3,21 @@ let dynamoose = require('dynamoose');
 let Schema = dynamoose.Schema;
 let moment = require('moment');
 
-var mediaSchema = new Schema({
-  id: {
+var UserSchema = new Schema({
+  username: {
     type: String,
     required:true,
     hashKey: true
   },
-  post_id: {
+  password: {
     type: String,
     default: null
   },
+  role:{
+    type:String,
+    default:"user"
+  },
+  email:String,
   creation_timestamp:Number,
   edit_timestamp:{
     type:Number,
@@ -21,4 +26,4 @@ var mediaSchema = new Schema({
 
 });
 
-module.exports = dynamoose.model('mediaobjects', mediaSchema);
+module.exports = dynamoose.model('users', UserSchema);

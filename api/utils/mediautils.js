@@ -2,103 +2,31 @@
 */
 var moment=require('moment');
 let ddbutil=require('ddbutil');
-
-const getCropExpressions = (key,size,cropdata)  =>{
-
-  var data = {
-    ExpressionAttributeNames: {},
-    ExpressionAttributeValues: {},
-    UpdateExpression: {}
-  };
-  data.Key={ "id" : key };
-  data.TableName="mediaobjects";
-
-  data.ExpressionAttributeNames["#data"] = "data";
-  data.ExpressionAttributeNames["#"+size] = size;
-  data.ExpressionAttributeValues[":cd"] = cropdata;
-  data.UpdateExpression = "SET #data.#"+size+"=:cd";
-  return data;
-
-};
+let dynamoose = require('dynamoose');
+let Posts = dynamoose.model('Posts');
+let Media = dynamoose.model('mediaobjects');
 
 const getPostLom=(post_id)=>{
 
- let params = {
-   TableName: "Posts",
-   Key: {
-       "id": post_id
-   },
-   ProjectionExpression:"list_of_media"
- };
- return params;
+ return Posts.get({id:post_id});
 
 }
 
-const updatePostLom=(post_id,lom)=> {
- let data = {
-   ExpressionAttributeNames: {},
-   ExpressionAttributeValues: {},
-   UpdateExpression: {}
- };
- data.Key={ "id" :post_id };
- data.TableName="Posts";
- data.ExpressionAttributeNames["#lom"] = "list_of_media";
- data.UpdateExpression = "SET #lom=:lom";
- data.ExpressionAttributeValues[":lom"] = lom;
+const getFullMedia=(media_id)=>{
 
- return data;
+  return Media.get({id:media_id})
+   .then((data)=>{
+    console.log(data.post_id);
+    return Promise.resolve(getPostLom(data.post_id))
+  })
 }
 
-const getUpdatePostExpressions = (key,lom)  =>{
+function updateCropData(_id, _size, _cd){
 
-  var data = {
-    ExpressionAttributeNames: {},
-    ExpressionAttributeValues: {},
-    UpdateExpression: {}
-  };
-  data.Key={ "id" : key };
-  data.TableName="Posts";
-
-  data.ExpressionAttributeNames["#lom"] = "list_of_media";
-  data.ExpressionAttributeValues[":lom"] = lom;
-  data.UpdateExpression = "SET #lom=:lom";
-  return data;
-
-};
-
-function updateCropData(_id, _size, _cd, docClient){
-
-  let _lom;
-  let _pid;
-  let getPostLOM;
-
-  let params1 = {
-    TableName: "mediaobjects",
-    Key: {
-        "id": _id
-    },
-    ExpressionAttributeNames: {
-         "#pid": "post_id",
-     },
-    ProjectionExpression:"#pid"
-    };
-
-  return ddbutil.get(docClient,params1)
-  .then((data)=>{
-    _pid=data.Item.post_id;
-    let params = {
-      TableName: "Posts",
-      Key: {
-          "id": _pid
-      },
-      ExpressionAttributeNames: {
-           "#n": "list_of_media",
-       },
-      ProjectionExpression:"#n"
-    };
-    return Promise.resolve(ddbutil.get(docClient,params))})
+    return getFullMedia(_id)
     .then((data)=>{
-      _lom=data.Item.list_of_media;
+      let _pid=data.id;
+      let _lom=data.list_of_media;
       let mo = _lom.filter(function(a){return a.id==_id})[0];
       mo.data[_size]=_cd;
       mo.edit_timestamp=moment().unix();
@@ -115,48 +43,20 @@ function updateCropData(_id, _size, _cd, docClient){
         }
         return aa - bb;
       });
-      var params2 = getUpdatePostExpressions(_pid, _lom);
-      return Promise.resolve(ddbutil.update(docClient,params2));
+      return Promise.resolve(Posts.update({id:_pid},{list_of_media:_lom}));
       })
 
 
 }
 
-function updateOriginalData(req, res, _status, docClient, file){
+function updateOriginalData(req, res, _status, file){
 
-  let _lom;
   let _id=req.body.id;
-  let _pid;
-  var params1 = {
-    TableName: "mediaobjects",
-    Key: {
-        "id": _id
-    },
-    ExpressionAttributeNames: {
-         "#pid": "post_id",
-     },
-    ProjectionExpression:"#pid"
-    };
 
-
-  ddbutil.get(docClient,params1)
-  .then(data=>{
-    _pid=data.Item.post_id;
-    var params = {
-      TableName: "Posts",
-      Key: {
-          "id": _pid
-      },
-      ExpressionAttributeNames: {
-           "#n": "list_of_media",
-       },
-      ProjectionExpression:"#n"
-    };
-    // getPostLOM=docClient.get(params).promise();
-    return Promise.resolve(ddbutil.get(docClient,params))},
-    err=>{ throw err })
-    .then(data=>{
-      _lom=data.Item.list_of_media;
+  return getFullMedia(_id).
+  then(data=>{
+      let _pid=data.id;
+      let _lom=data.list_of_media;
       let mo = _lom.filter(function(a){return a.id==_id})[0];
       mo.original_data=file;
       mo.status=_status;
@@ -176,23 +76,14 @@ function updateOriginalData(req, res, _status, docClient, file){
         return aa - bb;
       });
 
-     return Promise.resolve(ddbutil.update(docClient,getUpdatePostExpressions(_pid, _lom)))
+     return Promise.resolve(Posts.update({id:_pid},{list_of_media:_lom}))
    },
-   err=>{throw err})
-   .then(()=>{res.json({status: "success"})})
-   .catch(function(err) {
-     console.log(err);
-     res.status(500).send({
-       status:'error',
-       message: err});
-     });
-
-
+   err=>{throw err});
 }
+
 module.exports={
   updateOriginalData,
   updateCropData,
   getPostLom,
-  updatePostLom,
-  getUpdatePostExpressions,
-  getCropExpressions};
+  getFullMedia
+};

@@ -1,8 +1,6 @@
 let AWS = require('aws-sdk');
 AWS.config.loadFromPath("config.js");
 let s3 = new AWS.S3();
-let https = require('https');
-let ddbutil=require('ddbutil');
 let moment = require('moment');
 let uuid=require('uuid4');
 let async = require('async');
@@ -10,25 +8,15 @@ let _ = require('lodash');
 let gm = require('gm').subClass({
   imageMagick: true
 });
-let agent = new https.Agent({
-   keepAlive: true
-});
-let docClient = new AWS.DynamoDB.DocumentClient({
-   httpOptions:{
-      agent: agent
-   }});
 let tinify = require("tinify");
 tinify.key = "aV6X6prtKFLyfe1XZX50qrDyNsCwfFQb";
-const {updateOriginalData,updateCropData,getUpdatePostExpressions,getPostLom,updatePostLom} = require("../utils/mediautils");
+const {updateOriginalData,getFullMedia,updateCropData,getPostLom} = require("../utils/mediautils");
 ////////////////////////////////////////
 const bucketName = "alexmassbucket";
 let pathParams, image, imageName, srcKey,typeMatch,filetype;
 var srcBucket = bucketName;
 var dstBucket = bucketName + "-output";
 ///////////////////////////////////////////
-
-
-
 
 function updatemedia(req, res) {
 
@@ -51,7 +39,12 @@ function updatemedia(req, res) {
         };
         s3.putObject(s3params, function(err, data) {
           if (err) res.status(500).send({status:"error", message:"something happened with s3"});
-          updateOriginalData(req, res, "complete",  docClient, metadata);
+          updateOriginalData(req, res, "complete", metadata)
+          .then(()=>{res.json({status:"sucesss"})})
+          .catch(err=>{
+            res.status(500).send({
+            status:'error',
+            message: err.message});})
 
         });
       });
@@ -61,40 +54,15 @@ function updatemedia(req, res) {
 
 function cropmedia(req,res){
 
-
     let post_id;
     let cropdata;
     console.log("crop life");
     imageName = req.body.id;
-    let params={
-      TableName: "mediaobjects",
-      Key: {
-          "id": req.body.id
-      },
-      ProjectionExpression:"original_data,post_id"
-    };
 
-    ddbutil.get(docClient,params)
-    .then((data) => {
-      console.log("hi");
-
-      post_id = data.Item.post_id;
-
-      var params = {
-        TableName: "Posts",
-        Key: {
-            "id": post_id
-        },
-        ExpressionAttributeNames: {
-             "#n": "list_of_media",
-         },
-        ProjectionExpression:"#n"
-      };
-      // let getPostLOM=docClient.get(params).promise();
-      return Promise.resolve(ddbutil.get(docClient,params))})
+      getFullMedia(req.body.id)
       .then(data=>{
-        console.log(data.Item.list_of_media);
-        let mo = data.Item.list_of_media.filter(function(a){return a.id==req.body.id});
+        console.log(data.list_of_media);
+        let mo = data.list_of_media.filter(function(a){return a.id==req.body.id});
         if (mo[0].original_data) {
           console.log("yea boy")
           srcKey = mo[0].original_data.url;
@@ -129,6 +97,7 @@ function cropmedia(req,res){
             console.timeEnd("downloadImage");
           },
           function processImage(response, next) {
+            console.time("processImage");
 
             let cropdataparse=req.body.crop_data.split(",");
 
@@ -161,6 +130,8 @@ function cropmedia(req,res){
                       "url": 'images/' + `${imageName}` + "." + _sizeArray[key] + "." + filetype,
                       "status": "processed"
                     };
+                    console.timeEnd("processImage");
+
                     next(null, buffer);
                   });
                   });
@@ -198,7 +169,7 @@ function cropmedia(req,res){
              message: err.message});
         }
 
-        updateCropData(req.body.id, req.body.crop_ratio, cropdata,docClient) //
+        updateCropData(req.body.id, req.body.crop_ratio, cropdata,docClient)
         .then(()=>{
           console.log("success");
           res.json({
@@ -217,8 +188,6 @@ function cropmedia(req,res){
 
 }
 
-
-
 function createmedia(req,res){
 
      var postid=req.body.post_id;
@@ -235,26 +204,15 @@ function createmedia(req,res){
           "status": "new"
         }
       };
-     var params = {
-       TableName: "Posts",
-       Key: {
-           "id": postid
-       },
-       ExpressionAttributeNames: {
-         "#LOM": "list_of_media"
-       },
-       ExpressionAttributeValues: {":mo": [mediaobj]},
-       UpdateExpression:"SET #LOM = list_append(#LOM, :mo)"
-     };
 
-
-     ddbutil.update(docClient,params)
+     getPostLom(pid)
+     .then((data)=>{
+       let list_of_media=data.list_of_media;
+       list_of_media.push(mediaobj);
+       return Promise.resolve(Posts.update({id:pid},{list_of_media:list_of_media}))
+     })
      .then((data) => {
-     var media_params = {
-       TableName: "mediaobjects",
-       Item: mediaobj
-     };
-     return Promise.resolve(ddbutil.put(docClient,media_params));
+     return Promise.resolve(Media.create(mediaobj));
      })
      .then(()=>{
        res.json({
@@ -272,42 +230,20 @@ function createmedia(req,res){
          message: "Internal Error"})
        });
 }
+
 function get_a_media(req,res){
   let id = req.query.id;
-  let params = {
-    TableName: "mediaobjects",
-    Key: {
-        "id": id
-    },
-    ExpressionAttributeNames: {
-         "#pid": "post_id",
-     },
-    ProjectionExpression:"#pid"
-    };
 
-  ddbutil.get(docClient, params).then((data) => {
-    let params = {
-      TableName: "Posts",
-      Key: {
-          "id": data.Item.post_id
-      },
-      ExpressionAttributeNames: {
-           "#n": "list_of_media",
-       },
-      ProjectionExpression:"#n"
-    };
-    // getPostLOM=docClient.get(params).promise();
-    return Promise.resolve(ddbutil.get(docClient,params))
-    })
+    getFullMedia(id)
     .then((data)=>{
-      _lom=data.Item.list_of_media;
-      let mo = _lom.filter(function(a){return a.id==id})[0];
+      let list_of_media=data.list_of_media;
+      let mo = list_of_media.filter(function(a){return a.id==id})[0];
 
-    res.json({
-      "status": "success",
-      "data": {
-        "media": mo
-      }});
+      res.json({
+        "status": "success",
+        "data": {
+          "media": [mo]
+        }});
 
   }).catch((err) => {
     console.log(err);
@@ -321,12 +257,10 @@ function get_a_media(req,res){
 function get_medialist(req,res){
   console.log("in list");
   let post_id = req.query.post_id;
-  let params = getPostLom(post_id);
 
-  ddbutil.get(docClient, params).then((data) => {
-    let list_of_media = data.Item.list_of_media;
+  getPostLom(post_id).then((data) => {
 
-    let sortedArray = list_of_media;
+    let sortedArray = data.list_of_media;
     if (sortedArray.length > 1) {
       sortedArray = list_of_media.sort(function(a, b) {
         let aa = a.creation_timestamp,
@@ -360,56 +294,47 @@ function get_medialist(req,res){
 }
 
 function deletemedia(req,res){
-let post_id=req.body.post_id;
-let updatedList;
-media_id = req.body.id;
-let params = {
-  TableName: "mediaobjects",
-  Key: {
-    "id": media_id
-  },
-  ReturnValues: "ALL_OLD"
-};
+  let post_id=req.body.post_id;
+  let updatedList;
+  let media_id = req.body.id;
 
-ddbutil.delete(docClient,params).then((data) => {
-    console.log(data);
-    post_id = data.Attributes.post_id
-    let params = getPostLom(post_id);
-    // let getMediaPromise = docClient.get(params).promise();
-    // getMediaPromise.then((data) => (data.Item.list_of_media))
-    return Promise.resolve(ddbutil.get(docClient,params))
-  }).then((data) => {
+  getPostLom(post_id)
+  .then((data) => {
 
-    let updatedList = _.remove(data.Item.list_of_media, {
-      id: media_id
-    });
-
-    if (updatedList.length > 1) {
-      updatedList = updatedList.sort(function(a, b) {
-        var aa = a.creation_timestamp,
-          bb = b.creation_timestamp;
-        //  console.log(aa);
-        if (aa !== bb) {
-          if (aa > bb) {
-            return 1;
-          }
-          if (aa < bb) {
-            return -1;
-          }
-        }
-        return aa - bb;
+      let updatedList = _.remove(data.list_of_media, {
+        id: media_id
       });
-    }
-    return Promise.resolve(ddbutil.update(docClient,updatePostLom(post_id,updatedList)))
-  }).then(()=>{
-    console.log("success");
-    res.json({"status" : "success"});
-  }).catch((err) => {
-    console.log(err);
-    res.status(500).json({
-      status:'error',
-      message: "Internal error"});
-    });
+
+      if (updatedList.length > 1) {
+        updatedList = updatedList.sort(function(a, b) {
+          var aa = a.creation_timestamp,
+            bb = b.creation_timestamp;
+          //  console.log(aa);
+          if (aa !== bb) {
+            if (aa > bb) {
+              return 1;
+            }
+            if (aa < bb) {
+              return -1;
+            }
+          }
+          return aa - bb;
+        });
+      }
+      return Promise.resolve(Posts.update({list_of_media:updatedList}))
+    }).then(()=>{
+      Promise.resolve(Media.delete({id:media_id}))
+    })
+    .then(()=>{
+      ///To do, delete images in media object from S3 bucket
+      console.log("success");
+      res.json({"status" : "success"});
+    }).catch((err) => {
+      console.log(err);
+      res.status(500).json({
+        status:'error',
+        message: "Internal error"});
+      });
 }
 
 exports.update_a_media = function (req,res){
