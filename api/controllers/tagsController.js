@@ -44,7 +44,7 @@ function gettags(req,res){
 }
 
 exports.delete_a_tag = function(req, res) {
-  if(!req.user.role==="admin"){
+  if(req.user.role!=="admin"){
     res.status(500).send({
       status:'error',
       message:"You don't have permissions to do this task"});
@@ -60,8 +60,8 @@ exports.delete_a_tag = function(req, res) {
 };
 
 exports.create_tag = function(req, res) {
-  if(!req.user.role==="admin"){
-    res.status(500).send({
+  if(req.user.role!=="admin"){
+    res.status(500).json({
       status:'error',
       message:"You don't have permissions to do this task"});
       return;
@@ -76,8 +76,8 @@ exports.create_tag = function(req, res) {
 };
 
 exports.get_tags = function(req, res) {
-  if(!req.user.role==="admin"){
-    res.status(500).send({
+  if(req.user.role!=="admin"){
+    res.status(500).json({
       status:'error',
       message:"You don't have permissions to do this task"});
       return;

@@ -4,13 +4,9 @@ let uuid=require('uuid4');
 let dynamoose = require('dynamoose');
 let Posts = dynamoose.model('Posts');
 let Media = dynamoose.model('mediaobjects');
-
-/////////////////////////////////////
 let setTags=require("../utils/updatetags");
 
-////////////////////////////////////
-
-
+/////////////////////////////////////
 
 function get_a_post(req,res) {
 
@@ -31,9 +27,9 @@ function get_a_post(req,res) {
         res.json(response);
        }).catch((err)=>{
          console.log(err);
-         res.status(404).json({
+         res.status(500).json({
            status:'error',
-           message:err});
+           message:"Post ID doesn't exist"});
        });
 };
 
@@ -209,7 +205,7 @@ function deletepost(req,res){
 
 exports.update_a_post = function(req, res) {
 
-  if(!req.user.role==="admin"){
+  if(req.user.role!=="admin"){
     res.status(500).json({
       status:'error',
       message:"You don't have permissions to do this task"});
@@ -241,7 +237,7 @@ exports.update_a_post = function(req, res) {
 
 
 exports.delete_a_post = function(req, res) {
-  if(!req.user.role==="admin"){
+  if(req.user.role!=="admin"){
     res.status(500).send({
       status:'error',
       message:"You don't have permissions to do this task"});

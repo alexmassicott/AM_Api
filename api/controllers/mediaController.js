@@ -30,7 +30,7 @@ function updatemedia(req, res) {
     metadata.url=url;
 
     tinify.fromBuffer(req.files["file_data"][0].buffer).toBuffer(function(err, resultData) {
-        if (err) console.log(err);
+        if (err)return res.status(500).send({status:"error", message:"something is wrong with image"});
         let s3params =  {
                 Bucket: bucketName,
                 Key: url,
@@ -47,9 +47,7 @@ function updatemedia(req, res) {
             message: err.message});})
         });
       });
-
 };
-
 
 function cropmedia(req,res){
 
@@ -139,12 +137,11 @@ function cropmedia(req,res){
               Body: crop,
               ContentType: filetype.toUpperCase()
             }, next);
-
           }
         ], (err, result) => {
           if (err) {
             console.log(err);
-            res.status(500).send({
+            res.status(500).json({
               status:'error',
               message: err.message});
           }
@@ -156,12 +153,12 @@ function cropmedia(req,res){
       }, (err, result) => {
         if (err) {
            console.log(err);
-           res.status(500).send({
+           res.status(500).json({
              status:'error',
              message: err.message});
         }
 
-        updateCropData(req.body.id, req.body.crop_ratio, cropdata,docClient)
+        updateCropData(req.body.id, req.body.crop_ratio, cropdata)
         .then(()=>{
           console.log("success");
           res.json({ "status": "success"});
@@ -215,13 +212,14 @@ function createmedia(req,res){
      })
      .catch((err)=> {
        console.log(err);
-       res.status(500).send({
+       res.status(500).json({
          status:'error',
-         message: "Internal Error"})
+         message: err.message})
        });
 }
 
 function get_a_media(req,res){
+
   let id = req.query.id;
 
     getFullMedia(id)
@@ -233,11 +231,11 @@ function get_a_media(req,res){
         "status": "success",
         "data": {
           "media": [mo]
-        }});
-
-  }).catch((err) => {
-    console.log(err);
-    res.status(500).send({
+        }
+      });
+    }).catch((err) => {
+      console.log(err);
+      res.status(500).send({
       status: 'error',
       message: err.message
     });
@@ -328,7 +326,7 @@ function deletemedia(req,res){
 }
 
 exports.update_a_media = function (req,res){
-  if(!req.user.role==="admin"){
+  if(!req.user.role!=="admin"){
     res.status(500).send({
       status:'error',
       message:"You don't have permissions to do this task"});
@@ -337,7 +335,7 @@ exports.update_a_media = function (req,res){
   if (req.body.action=="upload")updatemedia(req,res);
   else if(req.body.action=="crop")cropmedia(req,res)
   else {
-  res.status(500).send({
+  res.status(500).json({
     status:'error',
     message: "media parameter"})
   }
@@ -345,7 +343,7 @@ exports.update_a_media = function (req,res){
 
 
 exports.create_a_media = function (req,res){
-  if(!req.user.role==="admin"){
+  if(!req.user.role!=="admin"){
     res.status(500).send({
       status:'error',
       message:"You don't have permissions to do this task"});
@@ -353,14 +351,14 @@ exports.create_a_media = function (req,res){
   }
   if (req.body.post_id)createmedia(req,res)
   else {
-  res.status(500).send({
+  res.status(500).json({
     status:'error',
     message: "media id was not specified"})
   }
 }
 
 exports.delete_a_media = function (req,res){
-  if(!req.user.role==="admin"){
+  if(req.user.role!=="admin"){
     res.status(500).send({
       status:'error',
       message:"You don't have permissions to do this task"});
@@ -368,14 +366,14 @@ exports.delete_a_media = function (req,res){
   }
   if (req.body.id)deletemedia(req,res)
   else {
-  res.status(500).send({
+  res.status(500).json({
     status:'error',
     message: "media id was not specified"});
   }
 }
 
 exports.show_media = function(req, res) {
-  if(!req.user.role==="admin"){
+  if(req.user.role!=="admin"){
     res.status(500).send({
       status:'error',
       message:"You don't have permissions to do this task"});

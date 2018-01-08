@@ -39,6 +39,5 @@ exports.authenticate = function(req, res) {
  } else {
    res.status(401).json({message:"passwords did not match"});
  }
-
 });
 }
