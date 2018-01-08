@@ -6,7 +6,7 @@ let Posts = dynamoose.model('Posts');
 function getfeeds(req,res){
   // ["work", "showcase", "news"]
   var count=0;
-const promises = req.query.feed.reduce((acc, type) => {
+  const promises = req.query.feed.reduce((acc, type) => {
 
   acc.push(Promise.resolve(Posts.query('type').eq(type).where("publication_status").eq("draft_in_progress").exec()));
 
@@ -38,7 +38,6 @@ const promises = req.query.feed.reduce((acc, type) => {
   }
     res.json({status:"success",data:{ posts : feed}})
   }).catch(err=>{console.log(err)})
-
 
 }
 

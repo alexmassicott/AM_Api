@@ -9,7 +9,7 @@ let gm = require('gm').subClass({
   imageMagick: true
 });
 let tinify = require("tinify");
-tinify.key = "aV6X6prtKFLyfe1XZX50qrDyNsCwfFQb";
+tinify.key = process.env.TINIFY_KEY;
 const {updateOriginalData,getFullMedia,updateCropData,getPostLom} = require("../utils/mediautils");
 ////////////////////////////////////////
 const bucketName = "alexmassbucket";
@@ -45,7 +45,6 @@ function updatemedia(req, res) {
             res.status(500).send({
             status:'error',
             message: err.message});})
-
         });
       });
 
@@ -67,7 +66,6 @@ function cropmedia(req,res){
           console.log("yea boy")
           srcKey = mo[0].original_data.url;
           console.log("srcKey is" +srcKey);
-
           typeMatch = srcKey.match(/\.([^.]*)$/);
           filetype = typeMatch[1].toLowerCase();
           cropImage();
@@ -75,9 +73,9 @@ function cropmedia(req,res){
       },err=>{throw err})
       .catch(function(err) {
       console.log(err);
-      res.status(500).send({
+      res.status(500).json({
         status:'error',
-        message: err})
+        message: err.message})
     });
     var _sizeArray = [req.body.crop_ratio];
     const cropImage = () => {
@@ -87,9 +85,6 @@ function cropmedia(req,res){
         async.waterfall([
           function download(next) {
             console.time("downloadImage");
-            // Download the image from S3 into a buffer.
-            // sadly it downloads the image several times, but we couldn't place it outside
-            // the variable was not recognized
             s3.getObject({
               Bucket: srcBucket,
               Key: srcKey
@@ -131,13 +126,10 @@ function cropmedia(req,res){
                       "status": "processed"
                     };
                     console.timeEnd("processImage");
-
                     next(null, buffer);
+                    });
                   });
-                  });
-
               });
-
           },
           function uploadResize(crop, next) {
 

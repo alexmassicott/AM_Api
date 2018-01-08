@@ -195,9 +195,8 @@ function createpost(req,res){
     }
 
 function deletepost(req,res){
-  console.log("deleting");
-  let post_id=req.body.id;
 
+  let post_id=req.body.id;
    //To do: Delete all media objects for posts, you could delete S3 objects too if you wanna get fancy
    Posts.delete({id: post_id}).then(()=>res.json({status:"success"}))
    .catch((err)=>{
@@ -210,22 +209,31 @@ function deletepost(req,res){
 
 exports.update_a_post = function(req, res) {
 
+  if(!req.user.role==="admin"){
+    res.status(500).json({
+      status:'error',
+      message:"You don't have permissions to do this task"});
+      return;
+  }
+
   if(req.body.id){
-  // ddbutil.update(docClient, getUpdatepostParams(req.body))
   Posts.update({id:req.body.id}, getUpdatepostParams(req.body))
   .then(data => {
-    let tags=[];
-    if(req.body.new_list_of_tags){
+    let tags = [];
+    if (req.body.new_list_of_tags) {
       console.log("tags bro");
-    tags=req.body.new_list_of_tags;
-    // setTags(req.body.id,tags,docClient);
-  }
-  res.json({"status":"success","data" : {type: "work"} });
-
-});
+      tags = req.body.new_list_of_tags;
+      // setTags(req.body.id,tags,docClient);
+    }
+      res.json({
+      "status": "success",
+      "data": {
+        type: "work"}
+      });
+    });
   }
   else{
-    res.status(500).send({
+    res.status(500).json({
       status:'error',
       message:"no id specified"})
   }
@@ -233,6 +241,12 @@ exports.update_a_post = function(req, res) {
 
 
 exports.delete_a_post = function(req, res) {
+  if(!req.user.role==="admin"){
+    res.status(500).send({
+      status:'error',
+      message:"You don't have permissions to do this task"});
+      return;
+  }
   console.log("yo its that dirty");
   if(req.body.id)deletepost(req,res);
   else{
