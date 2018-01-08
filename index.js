@@ -25,7 +25,6 @@ dynamoose.setDefaults({
   create: false,
   waitForActive: false
 });
-var crypto = require('crypto');
 var User = require('./api/models/User'),
 Media = require('./api/models/MediaObjects'),
 Tags = require('./api/models/Tags'),
@@ -67,13 +66,6 @@ var tag_routes = require('./api/routes/tagsRoutes'); //importing route
 tag_routes(app); //register the route
 var user_routes = require('./api/routes/userRoutes'); //importing route
 user_routes(app); //register the route
-
-
-app.use(function (err, req, res, next) {
-  if (err.name === 'UnauthorizedError') {
-    res.status(401).send({status:"error",message:'invalid token...'});
-  }
-});
 
 app.use(function(req, res) {
   res.status(404).send({url: req.originalUrl + ' not found'})

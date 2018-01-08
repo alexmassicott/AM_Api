@@ -38,7 +38,7 @@ function updatemedia(req, res) {
                 ContentType: 'image/'+filetype
         };
         s3.putObject(s3params, function(err, data) {
-          if (err) res.status(500).send({status:"error", message:"something happened with s3"});
+          if (err) return res.status(500).send({status:"error", message:"something happened with s3"});
           updateOriginalData(req, res, "complete", metadata)
           .then(()=>{res.json({status:"sucesss"})})
           .catch(err=>{
@@ -164,13 +164,11 @@ function cropmedia(req,res){
         updateCropData(req.body.id, req.body.crop_ratio, cropdata,docClient)
         .then(()=>{
           console.log("success");
-          res.json({
-            "status": "success"
-          });
-        },err=>{throw err})
+          res.json({ "status": "success"});
+        })
         .catch(err=>{
           console.log(err);
-          res.status(500).send({
+          res.status(500).json({
             status:'error',
             message: err})
         });
@@ -330,7 +328,12 @@ function deletemedia(req,res){
 }
 
 exports.update_a_media = function (req,res){
-  console.log(req.body);
+  if(!req.user.role==="admin"){
+    res.status(500).send({
+      status:'error',
+      message:"You don't have permissions to do this task"});
+      return;
+  }
   if (req.body.action=="upload")updatemedia(req,res);
   else if(req.body.action=="crop")cropmedia(req,res)
   else {
@@ -342,6 +345,12 @@ exports.update_a_media = function (req,res){
 
 
 exports.create_a_media = function (req,res){
+  if(!req.user.role==="admin"){
+    res.status(500).send({
+      status:'error',
+      message:"You don't have permissions to do this task"});
+      return;
+  }
   if (req.body.post_id)createmedia(req,res)
   else {
   res.status(500).send({
@@ -351,6 +360,12 @@ exports.create_a_media = function (req,res){
 }
 
 exports.delete_a_media = function (req,res){
+  if(!req.user.role==="admin"){
+    res.status(500).send({
+      status:'error',
+      message:"You don't have permissions to do this task"});
+      return;
+  }
   if (req.body.id)deletemedia(req,res)
   else {
   res.status(500).send({
@@ -360,12 +375,17 @@ exports.delete_a_media = function (req,res){
 }
 
 exports.show_media = function(req, res) {
-  console.log("show media");
-     if(req.query.post_id)get_medialist(req,res);
-     else if(req.query.id)get_a_media(req,res);
-     else{
-     res.status(500).send({
-       status:'error',
-       message:'no post id or media id specified'})
-   }
+  if(!req.user.role==="admin"){
+    res.status(500).send({
+      status:'error',
+      message:"You don't have permissions to do this task"});
+      return;
+  }
+   if(req.query.post_id)get_medialist(req,res);
+   else if(req.query.id)get_a_media(req,res);
+   else{
+   res.status(500).json({
+     status:'error',
+     message:'no post id or media id specified'})
+ }
 };
