@@ -8,7 +8,7 @@ function getfeeds(req,res){
   var count=0;
   const promises = req.query.feed.reduce((acc, type) => {
 
-  acc.push(Promise.resolve(Posts.query('type').eq(type).where("publication_status").eq("draft_in_progress").exec()));
+  acc.push(Promise.resolve(Posts.query('type').eq(type).where("publication_status").eq("live").exec()));
 
   return acc;
 }, []);

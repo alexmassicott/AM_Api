@@ -9,16 +9,7 @@ var dynamoose = require('dynamoose'),
   jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
   jwtOptions.secretOrKey = process.env.SECRET;
 exports.list_all_users = function(req, res) {
-  console.log("yo");
-  User.get({username: "Amgoody"})
-  .then(user=> {
-    console.log("usserrr");
-    res.json(user);
-  })
-  .catch(err=>{
-    res.status(500).send(err.message);
 
-  })
 };
 
 exports.create_user = function(req, res) {
@@ -41,8 +32,8 @@ exports.authenticate = function(req, res) {
  }
 
  if(user.password === req.body.password) {
-   // from now on we'll identify the user by the id and the id is the only personalized value that goes into our token
-   var payload = {user: user.username, role: user.role};
+
+   var payload = {user: user.username };
    var token = jwt.sign(payload, jwtOptions.secretOrKey);
    res.json({message: "ok", token: token});
  } else {
