@@ -46,7 +46,7 @@ const media={
       }
     };
 
-var PostSchema = new Schema({
+let PostSchema = new Schema({
   id: {
       type: String,
       required: true,

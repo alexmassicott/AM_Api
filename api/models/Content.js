@@ -3,22 +3,20 @@ let dynamoose = require('dynamoose');
 let Schema = dynamoose.Schema;
 let moment = require('moment');
 
-let mediaSchema = new Schema({
-  id: {
+let contentSchema = new Schema({
+  feed: {
     type: String,
     required:true,
     hashKey: true
   },
-  post_id: {
-    type: String,
-    default: null
-  },
-  creation_timestamp:Number,
+  posts:[String],
   edit_timestamp:{
     type:Number,
     default:moment().unix()
   }
 
+},{
+  forceDefault:true
 });
 
-module.exports = dynamoose.model('mediaobjects', mediaSchema);
+module.exports = dynamoose.model('content', contentSchema);

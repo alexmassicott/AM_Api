@@ -1,15 +1,17 @@
 'use strict';
 let dynamoose = require('dynamoose');
 let Posts = dynamoose.model('Posts');
-
+let Content = dynamoose.model('content');
 //////////////
 function getfeeds(req,res){
   // ["work", "showcase", "news"]
   var count=0;
   const promises = req.query.feed.reduce((acc, type) => {
 
-  acc.push(Promise.resolve(Posts.query('type').eq(type).where("publication_status").eq("live").exec()));
-
+  // acc.push(Promise.resolve(Posts.query('type').eq(type).where("publication_status").eq("live").exec()));
+  acc.push(  Content.get({feed:"list_of_live_"+type})
+    .then(items=>{
+      return Promise.resolve(Posts.batchGet(items.posts.map(item=>{return {id:item}})))}))
   return acc;
 }, []);
 

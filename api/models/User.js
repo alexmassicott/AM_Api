@@ -3,7 +3,7 @@ let dynamoose = require('dynamoose');
 let Schema = dynamoose.Schema;
 let moment = require('moment');
 
-var UserSchema = new Schema({
+let UserSchema = new Schema({
   username: {
     type: String,
     required:true,

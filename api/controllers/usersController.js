@@ -1,6 +1,8 @@
 'use strict';
 var dynamoose = require('dynamoose'),
   User = dynamoose.model('users'),
+  Posts = dynamoose.model('Posts'),
+  Content = dynamoose.model('content'),
   jwt = require('jsonwebtoken'),
   passportJWT = require("passport-jwt"),
   ExtractJwt = passportJWT.ExtractJwt,
@@ -9,7 +11,13 @@ var dynamoose = require('dynamoose'),
   jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
   jwtOptions.secretOrKey = process.env.SECRET;
 exports.list_all_users = function(req, res) {
-
+  Content.get({feed:"list_of_live_work"})
+  .then(items=>{
+    return Promise.resolve(Posts.batchGet(items.posts.map(item=>{return {id:item}})))})
+    .then((items)=>{res.send(items)})
+    .catch(err=>{
+      console.log(err);
+      res.status(500).send(err.message)})
 };
 
 exports.create_user = function(req, res) {

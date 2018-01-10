@@ -28,6 +28,7 @@ dynamoose.setDefaults({
 var User = require('./api/models/User'),
 Media = require('./api/models/MediaObjects'),
 Tags = require('./api/models/Tags'),
+Content = require('./api/models/Content'),
 Posts = require('./api/models/Posts');
 
 var jwtOptions = {}
