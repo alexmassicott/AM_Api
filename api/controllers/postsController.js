@@ -35,10 +35,10 @@ function get_a_post(req,res) {
 
 function get_a_type(req,res) {
 
-  console.log(req.query.type);
+  console.log(req.query.limit);
   let type = req.query.type;
 
-      Posts.query("type").eq(type).exec()
+      Posts.query("type").eq(type).descending().limit(req.query.limit).exec()
          .then(items => {
            console.log('Items found:', items.length);
            let response={
