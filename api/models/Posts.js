@@ -57,8 +57,8 @@ let PostSchema = new Schema({
       required: true,
       index: {
         global: true,
-        rangeKey: 'publication_status',
-        name: 'type-publication_status-index'
+        rangeKey: 'creation_timestamp',
+        name: 'type-creation_timestamp-index'
       }
     },
     creation_timestamp: Number,
