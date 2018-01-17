@@ -30,7 +30,7 @@ function updatemedia(req, res) {
     metadata.url=url;
 
     tinify.fromBuffer(req.files["file_data"][0].buffer).toBuffer(function(err, resultData) {
-        if (err)return res.status(500).send({status:"error", message:"something is wrong with image"});
+        if (err)return res.status(500).send({status:"error", message:err.message});
         let s3params =  {
                 Bucket: bucketName,
                 Key: url,
@@ -326,7 +326,7 @@ function deletemedia(req,res){
 }
 
 exports.update_a_media = function (req,res){
-  if(!req.user.role!=="admin"){
+  if(req.user.role!=="admin"){
     res.status(500).send({
       status:'error',
       message:"You don't have permissions to do this task"});

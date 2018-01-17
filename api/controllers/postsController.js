@@ -38,14 +38,14 @@ function get_a_type(req,res) {
   console.log(req.query.limit);
   let type = req.query.type;
 
-      Posts.query("type").eq(type).descending().limit(req.query.limit).exec()
+      Posts.query("type").eq(type).descending().startAt(req.query.offset).limit(req.query.limit).exec()
          .then(items => {
-           console.log('Items found:', items.length);
+           console.log(items);
            let response={
                 status:"success",
                 data:{
-                more_available: false,
-                LastEvaluatedKey: null,
+                more_available: items.lastKey?true:false,
+                LastEvaluatedKey: items.lastKey?items.lastKey:null,
                 number_of_posts_returned:items.length,
                 "posts": items
                 }

@@ -9,8 +9,8 @@ bodyParser = require('body-parser'),
 jwt = require('jsonwebtoken'),
 passport = require("passport"),
 passportJWT = require("passport-jwt");
-ExtractJwt = passportJWT.ExtractJwt;
-JwtStrategy = passportJWT.Strategy;
+let ExtractJwt = passportJWT.ExtractJwt;
+let JwtStrategy = passportJWT.Strategy;
 require('dotenv').config();
 dynamoose.AWS.config.loadFromPath("config.js");
 dynamoose.AWS.config.update({
@@ -76,3 +76,5 @@ app.use(function(req, res) {
 app.listen(port);
 
 console.log('API server started on: ' + port);
+
+module.exports=app;

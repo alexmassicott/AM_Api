@@ -1,7 +1,6 @@
 /*Expressions for AWS
 */
 var moment=require('moment');
-let ddbutil=require('ddbutil');
 let dynamoose = require('dynamoose');
 let Posts = dynamoose.model('Posts');
 let Media = dynamoose.model('mediaobjects');
