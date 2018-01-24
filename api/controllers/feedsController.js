@@ -21,23 +21,6 @@ function getfeeds(req,res){
   let feed = items.reduce(function (arr, row) {
   return arr.concat(row);
   }, []);
-
-  if (feed.length > 1) {
-  feed = feed.sort(function(a, b) {
-    var aa = a.creation_timestamp,
-      bb = b.creation_timestamp;
-    //  console.log(aa);
-    if (aa !== bb) {
-      if (aa < bb) {
-        return 1;
-      }
-      if (aa > bb) {
-        return -1;
-      }
-    }
-    return aa - bb;
-    });
-  }
     res.json({status:"success",data:{ posts : feed}})
   }).catch(err=>{console.log(err)})
 
