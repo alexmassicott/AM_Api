@@ -57,31 +57,30 @@ function get_a_type(req,res) {
        });
 };
 
-function getUpdatepostParams(req: Request): any{
+function getUpdatepostParams(body: any): any{
 
   var data:any = {};
-  if (req.new_client) {
-    data.client = req.new_client;
+  if (body.new_client) {
+    data.client = body.new_client;
   }
-  if (req.new_title) {
-    data.title = req.new_title;
+  if (body.new_title) {
+    data.title = body.new_title;
   }
-  if (req.new_summary) {
-    data.summary= req.new_summary;
+  if (body.new_summary) {
+    data.summary= body.new_summary;
   }
-  if (req.new_link) {
-    data.link = req.new_link;
+  if (body.new_link) {
+    data.link = body.new_link;
   }
-  if (req.redirect_link) {
-    data.redirect_link = req.redirect_link;
+  if (body.redirect_link) {
+    data.redirect_link = body.redirect_link;
   }
-  if (req.new_publication_status) {
-    data.publication_status = req.new_publication_status;
+  if (body.new_publication_status) {
+    data.publication_status = body.new_publication_status;
   }
-  if (req.new_featured===true || req.new_featured===false) {
-    data.featured = req.new_featured;
+  if (body.new_featured===true || body.new_featured===false) {
+    data.featured = body.new_featured;
   }
-  data.ReturnValues="ALL_NEW";
   return data;
 }
 
