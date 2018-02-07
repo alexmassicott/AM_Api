@@ -1,6 +1,25 @@
-# AM_Api
+## Skeleton for Node.js applications written in TypeScript
 
-This is the API source code I used for my portfolio website, http://alexandermassicott.com.
-It using Node, Express, and DynamoDB.
+### Development
 
-Docs coming soon.
+```bash
+npm run dev
+```
+
+### Running tests
+
+```bash
+npm test
+```
+
+### Linting
+
+```bash
+npm run lint
+```
+
+### Building a container
+
+```bash
+docker build .
+```
