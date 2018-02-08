@@ -4,8 +4,6 @@ import {User} from '../models/User';
 import { Request, Response } from 'express';
 import * as jwt from 'jsonwebtoken'
 import * as passportJWT from 'passport-jwt'
-import * as base64 from 'base-64'
-require('isomorphic-fetch');
 
 let ExtractJwt = passportJWT.ExtractJwt,
   moment=require('moment');

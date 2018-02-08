@@ -1,92 +1,57 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 const Tags_1 = require("../models/Tags");
-function deletetag(req, res) {
+function deletetag(req, res, next) {
     Tags_1.Tags.delete({ name: req.body.name })
         .then(() => {
         res.json({ "status": "success", "name": req.body.name });
     })
         .catch((err) => {
-        console.log(err);
-        res.status(500).send({
-            status: 'error',
-            message: "There was a error"
-        });
+        next(new Error("tag doesn't exist"));
     });
 }
-function createtag(req, res) {
+function createtag(req, res, next) {
     let name = req.body.name;
     Tags_1.Tags.create({ name: name })
         .then(() => {
         res.json({ "status": "success", "name": req.body.name });
     })
         .catch((err) => {
-        console.log(err);
-        res.status(500).send({
-            status: 'error',
-            message: "There was a error"
-        });
+        next(err);
     });
 }
-function gettags(req, res) {
+function gettags(req, res, next) {
     Tags_1.Tags.scan().attributes(["name"]).exec()
         .then((items) => {
         res.json({ "status": "success", "data": { "tags": items } });
     }).catch((err) => {
-        console.log(err);
-        res.status(500).send({
-            status: 'error',
-            message: "There was a error"
-        });
+        next(err);
     });
 }
-function delete_a_tag(req, res) {
-    if (req.user.role !== "admin") {
-        res.status(500).send({
-            status: 'error',
-            message: "You don't have permissions to do this task"
-        });
-        return;
-    }
+function delete_a_tag(req, res, next) {
+    if (req.user.role !== "admin")
+        next(new Error("you don't have the admissions to perform this task"));
     if (req.body.name)
-        deletetag(req, res);
-    else {
-        res.status(500).send({
-            status: 'error',
-            message: 'no name specified'
-        });
-    }
+        deletetag(req, res, next);
+    else
+        next(new Error("no name parameter specified"));
 }
 exports.delete_a_tag = delete_a_tag;
 ;
-function create_tag(req, res) {
-    if (req.user.role !== "admin") {
-        res.status(500).json({
-            status: 'error',
-            message: "You don't have permissions to do this task"
-        });
-        return;
-    }
+function create_tag(req, res, next) {
+    if (req.user.role !== "admin")
+        next(new Error("you don't have the admissions to perform this task"));
     if (req.body.name)
-        createtag(req, res);
-    else {
-        res.status(500).json({
-            status: 'error',
-            message: 'no name specified'
-        });
-    }
+        createtag(req, res, next);
+    else
+        next(new Error("no name parameter specified"));
 }
 exports.create_tag = create_tag;
 ;
-function get_tags(req, res) {
-    if (req.user.role !== "admin") {
-        res.status(500).json({
-            status: 'error',
-            message: "You don't have permissions to do this task"
-        });
-        return;
-    }
-    gettags(req, res);
+function get_tags(req, res, next) {
+    if (req.user.role !== "admin")
+        next(new Error("you don't have the admissions to perform this task"));
+    gettags(req, res, next);
 }
 exports.get_tags = get_tags;
 ;

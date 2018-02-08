@@ -12,6 +12,7 @@ import tagsRoutes from './api/routes/tagsRoutes'
 import mediaRoutes from './api/routes/mediaRoutes'
 import feedRoutes from './api/routes/feedsRoutes'
 import searchRoutes from './api/routes/searchRoutes'
+import { clientErrorHandler, errorHandler } from './api/utils/apiutils'
 require('dotenv').config();
 
 let ExtractJwt = passportJWT.ExtractJwt
@@ -64,6 +65,12 @@ class App {
     this.express.use(function(req, res) {
       res.status(404).send({url: req.originalUrl + ' not found'})
     });
+    this.express.use(clientErrorHandler);
+    this.express.use(errorHandler);
+
+
+
+
 
   }
 

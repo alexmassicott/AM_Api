@@ -2,18 +2,18 @@
 import * as moment from 'moment'
 import {Posts} from '../models/Posts'
 import {Media} from '../models/MediaObjects'
-import { Request, Response } from 'express'
+import { Request, Response, Next } from 'express'
 let setTags=require("../utils/updatetags")
 let uuid=require('uuid4')
 
-function get_a_post(req,res) {
+function get_a_post(req,res,next): void{
 
   console.log(req.query.id);
-  let id = req.query.id;
+  const id = req.query.id;
 
    Posts.get({id:id})
    .then(items => {
-   let response={
+   const response={
         status:"success",
         data:{
         more_available: false,
@@ -23,38 +23,27 @@ function get_a_post(req,res) {
         }
      };
     res.json(response);
-   }).catch((err)=>{
-     console.log(err);
-     res.status(500).json({
-       status:'error',
-       message:"Post ID doesn't exist"});
-   });
+   })
+   .catch((err)=>{next(err)});
 };
 
-function get_a_type(req,res) {
-
-  console.log(req.query.limit);
+function get_a_type(req, res, next): void{
   let type = req.query.type;
 
-      Posts.query("type").eq(type).descending().startAt(req.query.offset).limit(req.query.limit).exec()
-         .then(items => {
-           console.log(items);
-           let response={
-                status:"success",
-                data:{
-                more_available: items.lastKey?true:false,
-                LastEvaluatedKey: items.lastKey?items.lastKey:null,
-                number_of_posts_returned:items.length,
-                "posts": items
-                }
-             };
-           res.json(response);
-       }).catch((err)=>{
-         console.log(err);
-         res.status(500).json({
-           status:'error',
-           message:err.message})
-       });
+  Posts.query("type").eq(type).descending().startAt(req.query.offset).limit(req.query.limit).exec()
+  .then(items => {
+  const response={
+      status:"success",
+      data:{
+      more_available: items.lastKey?true:false,
+      LastEvaluatedKey: items.lastKey?items.lastKey:null,
+      number_of_posts_returned:items.length,
+      "posts": items
+      }
+   };
+  res.json(response);
+  })
+  .catch((err)=>{next(err)});
 };
 
 function getUpdatepostParams(body: any): any{
@@ -84,7 +73,7 @@ function getUpdatepostParams(body: any): any{
   return data;
 }
 
-function createpost(req,res){
+function createpost(req, res, next){
 
      var postid=uuid().replace(/-/g, '');
      var mediaid=uuid().replace(/-/g, '');
@@ -170,45 +159,27 @@ function createpost(req,res){
     .then(()=>{
      res.json({"status":"success","id":postid,"mediaid":mediaid});
     })
-    .catch((err)=>{
-     console.log(err);
-     res.status(500).send(err.message);
-    })
+    .catch((err)=>{next(err)})
   }
 
-function deletepost(req,res){
+function deletepost(req,res,next){
   const post_id=req.body.id;
    //To do: Delete all media objects for posts, you could delete S3 objects too if you wanna get fancy
-   Posts.delete({id: post_id}).then(()=>res.json({status:"success"}))
-   .catch((err)=>{
-     console.log(err);
-     res.status(500).send({
-       status:'error',
-       message:err})
-   });
+   Posts.delete({id: post_id})
+   .then(()=>res.json({status:"success"}))
+   .catch((err)=>{next(err)});
 }
 
 
-
-export function create_a_post(req:Request, res:Response): void{
-  console.log("creating");
+export function create_a_post(req:Request, res:Response, next: Next): void{
   console.log(req.body.type);
-  if(req.body.type)createpost(req,res);
-  else{
-    res.status(500).send({
-      status:'error',
-      message:"no type specified"});
-  }
+  if(req.body.type)createpost(req, res, next);
+  else next(new Error("no type specified"))
 };
 
-export function update_a_post(req:Request, res:Response): void{
+export function update_a_post(req:Request, res:Response, next: Next): void{
 
-  if(req.user.role!=="admin"){
-    res.status(500).json({
-      status:'error',
-      message:"You don't have permissions to do this task"});
-      return;
-  }
+  if(req.user.role!=="admin")next(new Error("You don't have permissions to do this task"));
 
   if(req.body.id){
   Posts.update({id:req.body.id}, getUpdatepostParams(req.body))
@@ -219,47 +190,24 @@ export function update_a_post(req:Request, res:Response): void{
       tags = req.body.new_list_of_tags;
       // setTags(req.body.id,tags,docClient);
     }
-      res.json({
-      "status": "success",
-      "data": {
-        type: "work"}
-      });
+    res.json({
+    "status": "success",
+    "data": {
+      type: "work"}
     });
+  });
   }
-  else{
-    res.status(500).json({
-      status:'error',
-      message:"no id specified"})
-  }
+  else next(new Error("no id specified"))
 };
 
-
-export function delete_a_post(req:Request, res:Response): void{
-
-  if(req.user.role!=="admin"){
-    res.status(500).send({
-      status:'error',
-      message:"You don't have permissions to do this task"});
-      return;
-  }
-  console.log("yo its that dirty");
-  if(req.body.id)deletepost(req,res);
-  else{
-   res.status(500).send({
-     status:'error',
-     message:"no id specified"})
- }
-
+export function delete_a_post(req:Request, res:Response, next: Next): void{
+  if(req.user.role!=="admin")next(new Error("you don't have the admissions to perform this task"))
+  if(req.body.id)deletepost(req,res, next);
+  else next(new Error("no id specified"))
 };
 
-export function show_posts(req:Request, res:Response): void{
-  console.log(req.query.id);
-  if(req.query.id)get_a_post(req,res);
-  else if(req.query.type)get_a_type(req,res)
-  else{
-  res.status(500).send({
-    status:'error',
-    message:'no type or id specified'
-})
-}
+export function show_posts(req:Request, res:Response, next: Next): void{
+  if(req.query.id)get_a_post(req, res, next);
+  else if(req.query.type)get_a_type(req,res, next)
+  else next(new Error("no id or type parameter"))
 };

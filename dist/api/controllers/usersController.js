@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const User_1 = require("../models/User");
 const jwt = require("jsonwebtoken");
 const passportJWT = require("passport-jwt");
-require('isomorphic-fetch');
 let ExtractJwt = passportJWT.ExtractJwt, moment = require('moment');
 var jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();

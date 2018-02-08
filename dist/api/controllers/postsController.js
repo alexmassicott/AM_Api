@@ -5,12 +5,12 @@ const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
 let setTags = require("../utils/updatetags");
 let uuid = require('uuid4');
-function get_a_post(req, res) {
+function get_a_post(req, res, next) {
     console.log(req.query.id);
-    let id = req.query.id;
+    const id = req.query.id;
     Posts_1.Posts.get({ id: id })
         .then(items => {
-        let response = {
+        const response = {
             status: "success",
             data: {
                 more_available: false,
@@ -20,22 +20,15 @@ function get_a_post(req, res) {
             }
         };
         res.json(response);
-    }).catch((err) => {
-        console.log(err);
-        res.status(500).json({
-            status: 'error',
-            message: "Post ID doesn't exist"
-        });
-    });
+    })
+        .catch((err) => { next(err); });
 }
 ;
-function get_a_type(req, res) {
-    console.log(req.query.limit);
+function get_a_type(req, res, next) {
     let type = req.query.type;
     Posts_1.Posts.query("type").eq(type).descending().startAt(req.query.offset).limit(req.query.limit).exec()
         .then(items => {
-        console.log(items);
-        let response = {
+        const response = {
             status: "success",
             data: {
                 more_available: items.lastKey ? true : false,
@@ -45,13 +38,8 @@ function get_a_type(req, res) {
             }
         };
         res.json(response);
-    }).catch((err) => {
-        console.log(err);
-        res.status(500).json({
-            status: 'error',
-            message: err.message
-        });
-    });
+    })
+        .catch((err) => { next(err); });
 }
 ;
 function getUpdatepostParams(body) {
@@ -79,7 +67,7 @@ function getUpdatepostParams(body) {
     }
     return data;
 }
-function createpost(req, res) {
+function createpost(req, res, next) {
     var postid = uuid().replace(/-/g, '');
     var mediaid = uuid().replace(/-/g, '');
     var timestamp = moment().unix();
@@ -161,45 +149,27 @@ function createpost(req, res) {
         .then(() => {
         res.json({ "status": "success", "id": postid, "mediaid": mediaid });
     })
-        .catch((err) => {
-        console.log(err);
-        res.status(500).send(err.message);
-    });
+        .catch((err) => { next(err); });
 }
-function deletepost(req, res) {
+function deletepost(req, res, next) {
     const post_id = req.body.id;
     //To do: Delete all media objects for posts, you could delete S3 objects too if you wanna get fancy
-    Posts_1.Posts.delete({ id: post_id }).then(() => res.json({ status: "success" }))
-        .catch((err) => {
-        console.log(err);
-        res.status(500).send({
-            status: 'error',
-            message: err
-        });
-    });
+    Posts_1.Posts.delete({ id: post_id })
+        .then(() => res.json({ status: "success" }))
+        .catch((err) => { next(err); });
 }
-function create_a_post(req, res) {
-    console.log("creating");
+function create_a_post(req, res, next) {
     console.log(req.body.type);
     if (req.body.type)
-        createpost(req, res);
-    else {
-        res.status(500).send({
-            status: 'error',
-            message: "no type specified"
-        });
-    }
+        createpost(req, res, next);
+    else
+        next(new Error("no type specified"));
 }
 exports.create_a_post = create_a_post;
 ;
-function update_a_post(req, res) {
-    if (req.user.role !== "admin") {
-        res.status(500).json({
-            status: 'error',
-            message: "You don't have permissions to do this task"
-        });
-        return;
-    }
+function update_a_post(req, res, next) {
+    if (req.user.role !== "admin")
+        next(new Error("You don't have permissions to do this task"));
     if (req.body.id) {
         Posts_1.Posts.update({ id: req.body.id }, getUpdatepostParams(req.body))
             .then(data => {
@@ -217,47 +187,28 @@ function update_a_post(req, res) {
             });
         });
     }
-    else {
-        res.status(500).json({
-            status: 'error',
-            message: "no id specified"
-        });
-    }
+    else
+        next(new Error("no id specified"));
 }
 exports.update_a_post = update_a_post;
 ;
-function delete_a_post(req, res) {
-    if (req.user.role !== "admin") {
-        res.status(500).send({
-            status: 'error',
-            message: "You don't have permissions to do this task"
-        });
-        return;
-    }
-    console.log("yo its that dirty");
+function delete_a_post(req, res, next) {
+    if (req.user.role !== "admin")
+        next(new Error("you don't have the admissions to perform this task"));
     if (req.body.id)
-        deletepost(req, res);
-    else {
-        res.status(500).send({
-            status: 'error',
-            message: "no id specified"
-        });
-    }
+        deletepost(req, res, next);
+    else
+        next(new Error("no id specified"));
 }
 exports.delete_a_post = delete_a_post;
 ;
-function show_posts(req, res) {
-    console.log(req.query.id);
+function show_posts(req, res, next) {
     if (req.query.id)
-        get_a_post(req, res);
+        get_a_post(req, res, next);
     else if (req.query.type)
-        get_a_type(req, res);
-    else {
-        res.status(500).send({
-            status: 'error',
-            message: 'no type or id specified'
-        });
-    }
+        get_a_type(req, res, next);
+    else
+        next(new Error("no id or type parameter"));
 }
 exports.show_posts = show_posts;
 ;

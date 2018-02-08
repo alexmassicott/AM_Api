@@ -27,7 +27,7 @@ let pathParams, image, imageName, srcKey, typeMatch, filetype;
 let srcBucket = bucketName;
 let dstBucket = bucketName + '-output';
 ///////////////////////////////////////////
-function updatemedia(req, res) {
+function updatemedia(req, res, next) {
     console.log("i'm in this bitch");
     image = req.files["file_data"][0];
     typeMatch = req.files["file_data"][0].originalname.match(/\.([^.]*)$/);
@@ -38,7 +38,7 @@ function updatemedia(req, res) {
     metadata.url = url;
     tinify.fromBuffer(req.files["file_data"][0].buffer).toBuffer(function (err, resultData) {
         if (err)
-            return res.status(500).send({ status: "error", message: err.message });
+            next(err);
         let s3params = {
             Bucket: bucketName,
             Key: url,
@@ -47,19 +47,19 @@ function updatemedia(req, res) {
         };
         s3_1.s3.putObject(s3params, function (err, data) {
             if (err)
-                return res.status(500).send({ status: "error", message: "something happened with s3" });
+                next(err);
             try {
                 mediautils_1.updateOriginalData(req.body.id, "complete", metadata);
                 res.json({ status: "success" });
             }
             catch (err) {
-                res.status(500).send({ status: "error", status_msg: err.message });
+                next(err);
             }
         });
     });
 }
 ;
-function cropmedia(req, res) {
+function cropmedia(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         let post_id;
         let cropdata;
@@ -82,16 +82,13 @@ function cropmedia(req, res) {
                 throw ("Couldn't find original image for media object");
         }
         catch (err) {
-            res.status(500).json({
-                status: 'error',
-                status_msg: err
-            });
+            next(err);
         }
         function cropImage() {
             async.forEachOf(_sizeArray, function (value, key, cb) {
                 console.log(value);
                 async.waterfall([
-                    function download(next) {
+                    function download(next2) {
                         console.time("downloadImage");
                         s3_1.s3.getObject({
                             Bucket: srcBucket,
@@ -99,8 +96,7 @@ function cropmedia(req, res) {
                         }, next);
                         console.timeEnd("downloadImage");
                     },
-                    function processImage(response, next) {
-                        console.time("processImage");
+                    function processImage(response, next2) {
                         let cropdataparse = req.body.crop_data.split(",");
                         let x = parseInt(cropdataparse[0]);
                         let y = parseInt(cropdataparse[1]);
@@ -129,59 +125,44 @@ function cropmedia(req, res) {
                                         "url": 'images/' + `${imageName}` + "." + _sizeArray[key] + "." + filetype,
                                         "status": "processed"
                                     };
-                                    console.timeEnd("processImage");
-                                    next(null, buffer);
+                                    next2(null, buffer);
                                 });
                             });
                         });
                     },
-                    function uploadResize(crop, next) {
+                    function uploadResize(crop, next2) {
                         s3_1.s3.putObject({
                             Bucket: dstBucket,
                             Key: 'images/' + `${imageName}` + "." + value + "." + filetype,
                             Body: crop,
                             ContentType: filetype.toUpperCase()
-                        }, next);
+                        }, next2);
                     }
                 ], (err, result) => {
-                    if (err) {
-                        console.log(err);
-                        res.status(500).json({
-                            status: 'error',
-                            status_msg: err.message
-                        });
-                    }
+                    if (err)
+                        next(err);
                     else {
                         console.log("End of step " + value);
                         cb();
                     }
                 });
             }, (err, result) => {
-                if (err) {
-                    console.log(err);
-                    res.status(500).json({
-                        status: 'error',
-                        status_msg: err.message
-                    });
-                }
+                if (err)
+                    next(err);
                 try {
                     mediautils_1.updateCropData(req.body.id, req.body.crop_ratio, cropdata);
                     res.json({ "status": "success" });
                 }
                 catch (err) {
-                    console.log(err);
-                    res.status(500).json({
-                        status: 'error',
-                        status_msg: err
-                    });
+                    next(err);
                 }
             });
         }
     });
 }
-function createmedia(req, res) {
+function createmedia(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
-        let postid = req.body.post_id;
+        const postid = req.body.post_id;
         const mediaid = uuid().replace(/-/g, '');
         const timestamp = moment().unix();
         const mediaobj = {
@@ -213,35 +194,30 @@ function createmedia(req, res) {
             });
         }
         catch (err) {
-            console.log(err);
-            res.status(500).json({
-                status: 'error',
-                status_msg: err.message
-            });
+            next(err);
         }
     });
 }
-function get_a_media(req, res) {
-    let id = req.query.id;
-    mediautils_1.getFullMedia(id)
-        .then((data) => {
-        let list_of_media = data.list_of_media;
-        let mo = list_of_media.filter(function (a) { return a.id == id; })[0];
-        res.json({
-            "status": "success",
-            "data": {
-                "media": [mo]
-            }
-        });
-    }).catch((err) => {
-        console.log(err);
-        res.status(500).send({
-            status: 'error',
-            status_msg: err.message
-        });
+function get_a_media(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const id = req.query.id;
+        try {
+            const data = yield mediautils_1.getFullMedia(id);
+            const list_of_media = data.list_of_media;
+            const mo = list_of_media.filter(function (a) { return a.id == id; })[0];
+            res.json({
+                "status": "success",
+                "data": {
+                    "media": [mo]
+                }
+            });
+        }
+        catch (err) {
+            next(err);
+        }
     });
 }
-function get_medialist(req, res) {
+function get_medialist(req, res, next) {
     console.log("in list");
     let post_id = req.query.post_id;
     mediautils_1.getPostLom(post_id).then((data) => {
@@ -268,14 +244,10 @@ function get_medialist(req, res) {
             }
         });
     }).catch((err) => {
-        console.log(err);
-        res.status(500).send({
-            status: 'error',
-            status_msg: err.message
-        });
+        next(err);
     });
 }
-function deletemedia(req, res) {
+function deletemedia(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         let post_id = req.body.post_id;
         let updatedList;
@@ -307,84 +279,44 @@ function deletemedia(req, res) {
             });
         }
         catch (err) {
-            console.log(err);
-            res.status(500).json({
-                status: 'error',
-                status_msg: err.message
-            });
+            next(err);
         }
     });
 }
-exports.update_a_media = function (req, res) {
-    if (req.user.role !== "admin") {
-        res.status(500).send({
-            status: 'error',
-            status_msg: "You don't have permissions to do this task"
-        });
-        return -1;
-    }
+exports.update_a_media = function (req, res, next) {
+    if (req.user.role !== "admin")
+        next(new Error("you don't have the admissions to perform this task"));
     if (req.body.action == "upload")
-        updatemedia(req, res);
+        updatemedia(req, res, next);
     else if (req.body.action == "crop")
-        cropmedia(req, res);
-    else {
-        res.status(500).json({
-            status: 'error',
-            status_msg: "missing media parameter"
-        });
-    }
+        cropmedia(req, res, next);
+    else
+        next(new Error("missing action parameters"));
 };
-exports.create_a_media = function (req, res) {
-    if (req.user.role !== "admin") {
-        res.status(500).send({
-            status: 'error',
-            message: "You don't have permissions to do this task"
-        });
-        return -1;
-    }
+exports.create_a_media = function (req, res, next) {
+    if (req.user.role !== "admin")
+        next(new Error("you don't have the admissions to perform this task"));
     if (req.body.post_id)
-        createmedia(req, res);
-    else {
-        res.status(500).json({
-            status: 'error',
-            status_msg: "media id was not specified"
-        });
-    }
+        createmedia(req, res, next);
+    else
+        next(new Error("post id or media id not specified"));
 };
-exports.delete_a_media = function (req, res) {
-    if (req.user.role !== "admin") {
-        res.status(500).send({
-            status: 'error',
-            status_msg: "You don't have permissions to do this task"
-        });
-        return -1;
-    }
+exports.delete_a_media = function (req, res, next) {
+    if (req.user.role !== "admin")
+        next(new Error("you don't have the admissions to perform this task"));
     if (req.body.id)
-        deletemedia(req, res);
-    else {
-        res.status(500).json({
-            status: 'error',
-            status_msg: "media id was not specified"
-        });
-    }
+        deletemedia(req, res, next);
+    else
+        next(new Error("post id or media id not specified"));
 };
-exports.show_media = function (req, res) {
-    if (req.user.role !== "admin") {
-        res.status(500).send({
-            status: 'error',
-            message: "You don't have permissions to do this task"
-        });
-        return -1;
-    }
+exports.show_media = function (req, res, next) {
+    if (req.user.role !== "admin")
+        next(new Error("you don't have the admissions to perform this task"));
     if (req.query.post_id)
-        get_medialist(req, res);
+        get_medialist(req, res, next);
     else if (req.query.id)
-        get_a_media(req, res);
-    else {
-        res.status(500).json({
-            status: 'error',
-            message: 'no post id or media id specified'
-        });
-    }
+        get_a_media(req, res, next);
+    else
+        next(new Error("post id or media id not specified"));
 };
 //# sourceMappingURL=mediaController.js.map

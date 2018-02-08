@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Posts_1 = require("../models/Posts");
 const Content_1 = require("../models/Content");
 //////////////
-function getfeeds(req, res) {
+function getfeeds(req, res, next) {
     // ["work", "showcase", "news"]
     let count = 0;
     const promises = req.query.feed.reduce((acc, type) => {
@@ -20,17 +20,14 @@ function getfeeds(req, res) {
             return arr.concat(row);
         }, []);
         res.json({ status: "success", data: { posts: feed } });
-    }).catch(err => { console.log(err); });
+    })
+        .catch(err => { next(err); });
 }
-function get_feed(req, res) {
+function get_feed(req, res, next) {
     if (req.query.feed)
-        getfeeds(req, res);
-    else {
-        res.status(500).send({
-            status: 'error',
-            message: 'no type or id specified'
-        });
-    }
+        getfeeds(req, res, next);
+    else
+        next(new Error('No feeds supplied'));
 }
 exports.get_feed = get_feed;
 ;

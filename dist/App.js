@@ -13,6 +13,7 @@ const tagsRoutes_1 = require("./api/routes/tagsRoutes");
 const mediaRoutes_1 = require("./api/routes/mediaRoutes");
 const feedsRoutes_1 = require("./api/routes/feedsRoutes");
 const searchRoutes_1 = require("./api/routes/searchRoutes");
+const apiutils_1 = require("./api/utils/apiutils");
 require('dotenv').config();
 let ExtractJwt = passportJWT.ExtractJwt;
 let JwtStrategy = passportJWT.Strategy;
@@ -57,6 +58,8 @@ class App {
         this.express.use(function (req, res) {
             res.status(404).send({ url: req.originalUrl + ' not found' });
         });
+        this.express.use(apiutils_1.clientErrorHandler);
+        this.express.use(apiutils_1.errorHandler);
     }
 }
 exports.default = new App().express;
