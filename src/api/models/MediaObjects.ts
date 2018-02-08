@@ -19,11 +19,8 @@ export const mediaSchema = new Schema({
     type: String,
     default: null
   },
-  creation_timestamp:{ type: Number },
-  edit_timestamp:{
-    type: Number,
-    default: Date.now()/1000
-  }
+  creation_timestamp:{ type: Number, default: Date.now()/1000 },
+  edit_timestamp:{ type: Number, default: Date.now()/1000 }
 });
 
 export const Media = dynamoose.model('mediaobjects', mediaSchema) as IMedia;

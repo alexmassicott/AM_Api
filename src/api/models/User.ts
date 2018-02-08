@@ -11,7 +11,9 @@ export interface IUser extends dynamoose.ModelConstructor<any,any,any>{
 const schema = new Schema({
       username: { type: String, hashKey: true, required: true },
       password: { type: String },
-      role: { type: String }
+      role: { type: String },
+      creation_timestamp:{ type: Number, default: Date.now()/1000 },
+      edit_timestamp:{ type: Number, default: Date.now()/1000 }
     });
 
 export const User = dynamoose.model('users', schema) as IUser;

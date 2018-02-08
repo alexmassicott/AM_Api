@@ -12,11 +12,8 @@ exports.mediaSchema = new Schema({
         type: String,
         default: null
     },
-    creation_timestamp: { type: Number },
-    edit_timestamp: {
-        type: Number,
-        default: Date.now() / 1000
-    }
+    creation_timestamp: { type: Number, default: Date.now() / 1000 },
+    edit_timestamp: { type: Number, default: Date.now() / 1000 }
 });
 exports.Media = database_1.dynamoose.model('mediaobjects', exports.mediaSchema);
 //# sourceMappingURL=MediaObjects.js.map

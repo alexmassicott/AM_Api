@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const User_1 = require("../models/User");
 const jwt = require("jsonwebtoken");
 const passportJWT = require("passport-jwt");
-let ExtractJwt = passportJWT.ExtractJwt, let = jwtOptions, any = {};
+let ExtractJwt = passportJWT.ExtractJwt, jwtOptions = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = process.env.SECRET;
 function list_all_users(req, res) {
@@ -11,19 +11,14 @@ function list_all_users(req, res) {
 exports.list_all_users = list_all_users;
 ;
 function create_user(req, res) {
-    User_1.User.create({ username: req.body.username, password: req.body.password, creation_timestamp: moment().unix() })
+    User_1.User.create({ username: req.body.username, password: req.body.password })
         .then(() => { res.json({ status: "success" }); })
         .catch(err => { res.status(500).send(err.message); });
 }
 exports.create_user = create_user;
-function authenticate(req, res) {
-    let username;
-    let password;
-    if (req.body.username && req.body.password) {
-        username = req.body.username;
-        password = req.body.password;
-    }
-    // usually this would be a database call:
+function authenticate(req, res, next) {
+    const username = req.body.username;
+    const password = req.body.password;
     User_1.User.get({ username: username })
         .then((user) => {
         if (!user) {
@@ -35,7 +30,7 @@ function authenticate(req, res) {
             res.json({ message: "ok", token: token });
         }
         else {
-            next(new Error("Invalid Aunthentification"));
+            next(new Error("Invalid Authentification"));
         }
     });
 }
