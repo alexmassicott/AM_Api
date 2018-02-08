@@ -1,7 +1,7 @@
 'use strict';
 import {Posts} from '../models/Posts'
 import {Media} from '../models/MediaObjects'
-import { Request, Response, Next } from 'express'
+import { Request, Response } from 'express'
 let setTags=require("../utils/updatetags")
 let uuid=require('uuid4')
 
@@ -170,13 +170,13 @@ function deletepost(req,res,next){
 }
 
 
-export function create_a_post(req:Request, res:Response, next: Next): void{
+export function create_a_post(req:Request, res:Response, next: any): void{
   console.log(req.body.type);
   if(req.body.type)createpost(req, res, next);
   else next(new Error("no type specified"))
 };
 
-export function update_a_post(req:Request, res:Response, next: Next): void{
+export function update_a_post(req:Request, res:Response, next: any): void{
 
   if(req.user.role!=="admin")next(new Error("You don't have permissions to do this task"));
 
@@ -199,13 +199,13 @@ export function update_a_post(req:Request, res:Response, next: Next): void{
   else next(new Error("no id specified"))
 };
 
-export function delete_a_post(req:Request, res:Response, next: Next): void{
+export function delete_a_post(req:Request, res:Response, next: any): void{
   if(req.user.role!=="admin")next(new Error("you don't have the admissions to perform this task"))
   if(req.body.id)deletepost(req,res, next);
   else next(new Error("no id specified"))
 };
 
-export function show_posts(req:Request, res:Response, next: Next): void{
+export function show_posts(req:Request, res:Response, next: any): void{
   if(req.query.id)get_a_post(req, res, next);
   else if(req.query.type)get_a_type(req,res, next)
   else next(new Error("no id or type parameter"))

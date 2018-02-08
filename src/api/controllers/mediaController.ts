@@ -5,7 +5,7 @@ import * as tinify from 'tinify'
 import {IPostMedia,Posts} from '../models/Posts'
 import {Media} from '../models/MediaObjects'
 import {updateOriginalData,getFullMedia,updateCropData,getPostLom} from '../utils/mediautils'
-import { Response, Request, Next } from 'express'
+import { Response, Request } from 'express'
 let gm = require('gm').subClass({
   imageMagick: true
 })
@@ -19,7 +19,7 @@ let srcBucket = bucketName;
 let dstBucket = bucketName + '-output';
 ///////////////////////////////////////////
 
-function updatemedia(req: Request, res: Response, next: Next): void{
+function updatemedia(req: Request, res: Response, next: any): void{
 
     console.log("i'm in this bitch")
     image = req.files["file_data"][0];
@@ -51,7 +51,7 @@ function updatemedia(req: Request, res: Response, next: Next): void{
     });
 };
 
-async function cropmedia(req: Request,res: Response, next: Next): Promise<void>{
+async function cropmedia(req: Request,res: Response, next: any): Promise<void>{
 
     let post_id;
     let cropdata;
@@ -156,7 +156,7 @@ async function cropmedia(req: Request,res: Response, next: Next): Promise<void>{
 
 }
 
-async function createmedia(req: Request, res: Response, next: Next): Promise<any>{
+async function createmedia(req: Request, res: Response, next: any): Promise<any>{
 
    const postid=req.body.post_id;
    const mediaid=uuid().replace(/-/g, '');
@@ -250,7 +250,7 @@ function get_medialist(req, res, next){
   });
 }
 
-async function deletemedia(req: Request,res: Response, next: Next): Promise<any>{
+async function deletemedia(req: Request,res: Response, next: any): Promise<any>{
 
   let post_id=req.body.post_id;
   let updatedList;
@@ -289,7 +289,7 @@ async function deletemedia(req: Request,res: Response, next: Next): Promise<any>
   }
 }
 
-export const update_a_media = function (req: Request, res: Response, next: Next): void{
+export const update_a_media = function (req: Request, res: Response, next: any): void{
   if(req.user.role!=="admin")next(new Error("you don't have the admissions to perform this task"))
 
   if (req.body.action=="upload")updatemedia(req, res, next)
@@ -297,20 +297,20 @@ export const update_a_media = function (req: Request, res: Response, next: Next)
   else next(new Error("missing action parameters"))
 }
 
-export const create_a_media = function(req: Request, res: Response, next: Next): void{
+export const create_a_media = function(req: Request, res: Response, next: any): void{
   if(req.user.role!=="admin")next(new Error("you don't have the admissions to perform this task"))
   if(req.body.post_id)createmedia(req, res, next)
   else next(new Error("post id or media id not specified"))
 }
 
-export const delete_a_media = function (req: Request, res: Response, next: Next): void{
+export const delete_a_media = function (req: Request, res: Response, next: any): void{
   if(req.user.role!=="admin")next(new Error("you don't have the admissions to perform this task"))
   if (req.body.id)deletemedia(req, res, next)
   else next(new Error("post id or media id not specified"))
 
 }
 
-export const show_media = function(req: Request, res: Response, next: Next): void{
+export const show_media = function(req: Request, res: Response, next: any): void{
   if(req.user.role!=="admin")next(new Error("you don't have the admissions to perform this task"))
    if(req.query.post_id)get_medialist(req, res, next);
    else if(req.query.id)get_a_media(req, res, next);

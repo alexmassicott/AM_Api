@@ -1,13 +1,13 @@
 'use strict';
-import { Request, Response, Next } from 'express';
+import { Request, Response } from 'express';
 import {Posts} from '../models/Posts';
 import {Content} from '../models/Content';
 //////////////
 
-function getfeeds(req:Request, res:Response, next: Next):void{
+function getfeeds(req:Request, res:Response, next: Function):void{
   // ["work", "showcase", "news"]
   let count=0;
-  const promises = req.query.feed.reduce((acc:Array<any>, type:String) => {
+  const promises = req.query.feed.reduce((acc:Array<any>, type: String) => {
 
   // acc.push(Promise.resolve(Posts.query('type').eq(type).where("publication_status").eq("live").exec()));
   acc.push(Content.get({feed:"list_of_live_"+type})
@@ -30,7 +30,7 @@ function getfeeds(req:Request, res:Response, next: Next):void{
 
 
 
-export function get_feed(req:Request, res:Response, next:Next):void {
+export function get_feed(req:Request, res:Response, next: Function):void {
   if (req.query.feed)getfeeds(req, res, next);
   else next( new Error('No feeds supplied'))
 };

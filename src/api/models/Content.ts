@@ -1,6 +1,5 @@
 'use strict';
 import {dynamoose} from '../config/database'
-import {unix} from 'moment'
 const Schema = dynamoose.Schema
 
 export interface IContent extends dynamoose.ModelConstructor<any,any,any>{
@@ -18,7 +17,7 @@ export const contentSchema = new Schema({
   posts:{type: [String]},
   edit_timestamp:{
     type:Number,
-    default:unix()
+    default:Date.now()/1000
   }
 
 },{
