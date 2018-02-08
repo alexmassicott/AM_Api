@@ -24,7 +24,6 @@ class App {
         this.express = express();
         this.init();
         this.mountRoutes();
-        // this.dramaticWelcome();
     }
     init() {
         this.jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();

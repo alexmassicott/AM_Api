@@ -26,7 +26,6 @@ class App {
     this.express = express()
     this.init()
     this.mountRoutes()
-    // this.dramaticWelcome();
   }
 
   private init(): void{
@@ -47,7 +46,6 @@ class App {
     });
     passport.use(strategy);
     this.express.use(passport.initialize());
-
   }
 
   private mountRoutes (): void {
@@ -67,11 +65,6 @@ class App {
     });
     this.express.use(clientErrorHandler);
     this.express.use(errorHandler);
-
-
-
-
-
   }
 
 }
