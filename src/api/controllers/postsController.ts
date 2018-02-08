@@ -1,5 +1,4 @@
 'use strict';
-import * as moment from 'moment'
 import {Posts} from '../models/Posts'
 import {Media} from '../models/MediaObjects'
 import { Request, Response, Next } from 'express'
@@ -75,9 +74,9 @@ function getUpdatepostParams(body: any): any{
 
 function createpost(req, res, next){
 
-     var postid=uuid().replace(/-/g, '');
-     var mediaid=uuid().replace(/-/g, '');
-     var timestamp=moment().unix();
+     var postid=uuid().replace(/-/g, '')
+     var mediaid=uuid().replace(/-/g, '')
+     var timestamp=Date.now()/1000
      var mediaobj={"id" :mediaid, "post_id" :postid, "creation_timestamp": timestamp};
 
      var full_mediaobj={

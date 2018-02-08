@@ -1,7 +1,6 @@
 'use strict';
 import {dynamoose} from '../config/database';
-let Schema = dynamoose.Schema;
-import * as moment from 'moment';
+const Schema = dynamoose.Schema;
 
 export interface IUser extends dynamoose.ModelConstructor<any,any,any>{
   username:string;

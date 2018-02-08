@@ -1,6 +1,5 @@
 /*Expressions for AWS
 */
-var moment=require('moment');
 import {IPost,Posts} from '../models/Posts';
 import {Media} from '../models/MediaObjects';
 export function getPostLom(post_id): Promise<any>{
@@ -26,7 +25,7 @@ export async function updateCropData(_id:string, _size:any, _cd:any): Promise<an
   let _lom=data.list_of_media;
   let mo = _lom.filter(function(a){return a.id==_id})[0];
   mo.data[_size]=_cd;
-  mo.edit_timestamp=moment().unix();
+  mo.edit_timestamp=Date.now()/1000;
   mo.number_of_changes+=1;
 
   let index = _lom.map(function(e) { return e.id; }).indexOf(_id);
@@ -57,7 +56,7 @@ export async function updateOriginalData(_id:string, _status:string, file:any): 
   mo.original_data=file;
   mo.status=_status;
   mo.number_of_changes+=1;
-  mo.edit_timestamp = moment().unix();
+  mo.edit_timestamp = Date.now()/1000
 
   var index = _lom.map(function(e) { return e.id; }).indexOf(_id);
   _lom[index]=mo;

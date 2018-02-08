@@ -1,7 +1,6 @@
 'use strict';
 import {dynamoose} from '../config/database';
 let Schema = dynamoose.Schema;
-let moment = require('moment');
 
 export interface ITag extends dynamoose.ModelConstructor<any,any,any>{
   name:string;
@@ -18,7 +17,7 @@ export const tagSchema = new Schema({
   creation_timestamp:{ type: Number },
   edit_timestamp:{
     type:Number,
-    default:moment().unix()
+    default:Date.now()/1000
   }
 
 },{

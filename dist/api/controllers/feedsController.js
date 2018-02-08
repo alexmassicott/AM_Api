@@ -16,7 +16,7 @@ function getfeeds(req, res, next) {
     }, []);
     Promise.all(promises)
         .then((items) => {
-        let feed = items.reduce(function (arr, row) {
+        const feed = items.reduce(function (arr, row) {
             return arr.concat(row);
         }, []);
         res.json({ status: "success", data: { posts: feed } });

@@ -1,7 +1,7 @@
 'use strict';
-import {dynamoose} from '../config/database';
-let Schema = dynamoose.Schema;
-let moment = require('moment');
+import {dynamoose} from '../config/database'
+import {unix} from 'moment'
+const Schema = dynamoose.Schema
 
 export interface IContent extends dynamoose.ModelConstructor<any,any,any>{
   feed:string;
@@ -9,7 +9,7 @@ export interface IContent extends dynamoose.ModelConstructor<any,any,any>{
   edit_timestamp:number;
 }
 
-export var contentSchema = new Schema({
+export const contentSchema = new Schema({
   feed: {
     type: String,
     required:true,
@@ -18,7 +18,7 @@ export var contentSchema = new Schema({
   posts:{type: [String]},
   edit_timestamp:{
     type:Number,
-    default:moment().unix()
+    default:unix()
   }
 
 },{

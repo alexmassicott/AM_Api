@@ -1,8 +1,7 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../config/database");
-let Schema = database_1.dynamoose.Schema;
-let moment = require('moment');
+const Schema = database_1.dynamoose.Schema;
 exports.mediaSchema = new Schema({
     id: {
         type: String,
@@ -16,7 +15,7 @@ exports.mediaSchema = new Schema({
     creation_timestamp: { type: Number },
     edit_timestamp: {
         type: Number,
-        default: moment().unix()
+        default: Date.now() / 1000
     }
 });
 exports.Media = database_1.dynamoose.model('mediaobjects', exports.mediaSchema);

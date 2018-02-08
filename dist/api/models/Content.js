@@ -1,8 +1,8 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../config/database");
-let Schema = database_1.dynamoose.Schema;
-let moment = require('moment');
+const moment_1 = require("moment");
+const Schema = database_1.dynamoose.Schema;
 exports.contentSchema = new Schema({
     feed: {
         type: String,
@@ -12,7 +12,7 @@ exports.contentSchema = new Schema({
     posts: { type: [String] },
     edit_timestamp: {
         type: Number,
-        default: moment().unix()
+        default: moment_1.unix()
     }
 }, {
     forceDefault: true

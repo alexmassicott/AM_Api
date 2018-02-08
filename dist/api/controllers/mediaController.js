@@ -9,7 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const s3_1 = require("../config/s3");
-const moment = require("moment");
 const async = require("async");
 const _ = require("lodash");
 const tinify = require("tinify");
@@ -164,7 +163,7 @@ function createmedia(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const postid = req.body.post_id;
         const mediaid = uuid().replace(/-/g, '');
-        const timestamp = moment().unix();
+        const timestamp = Date.now() / 1000;
         const mediaobj = {
             "id": mediaid,
             "post_id": postid,

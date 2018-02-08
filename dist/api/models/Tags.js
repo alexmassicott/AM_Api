@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../config/database");
 let Schema = database_1.dynamoose.Schema;
-let moment = require('moment');
 exports.tagSchema = new Schema({
     name: {
         type: String,
@@ -13,7 +12,7 @@ exports.tagSchema = new Schema({
     creation_timestamp: { type: Number },
     edit_timestamp: {
         type: Number,
-        default: moment().unix()
+        default: Date.now() / 1000
     }
 }, {
     forceDefault: true

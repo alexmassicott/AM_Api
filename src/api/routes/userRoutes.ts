@@ -1,6 +1,5 @@
 'use strict';
-let passport = require("passport");
-import {create_user,authenticate,list_all_users } from '../controllers/usersController';
+import { create_user, authenticate, list_all_users } from '../controllers/usersController';
 
 export default function(app) {
   console.log('applying');
@@ -12,6 +11,4 @@ export default function(app) {
 
     app.route('/authenticate')
       .post(authenticate);
-
-
 };

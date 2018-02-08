@@ -19,7 +19,7 @@ function getfeeds(req:Request, res:Response, next: Next):void{
   Promise.all(promises)
   .then((items)=>{
 
-  let feed = items.reduce(function (arr:Array<any>, row:Array<any>) {
+  const feed = items.reduce(function (arr:Array<any>, row:Array<any>) {
   return arr.concat(row);
   }, []);
     res.json({status:"success",data:{ posts : feed}})

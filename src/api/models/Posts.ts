@@ -1,7 +1,6 @@
 'use strict';
 import {dynamoose} from '../config/database';
 let Schema = dynamoose.Schema;
-let moment = require('moment');
 
 
 export interface IPost extends dynamoose.ModelConstructor<any,any,any>{
@@ -58,7 +57,7 @@ const media={
     },
     edit_timestamp :{
       type:Number,
-      default:moment().unix()
+      default:Date.now()/1000
     },
     status:String,
     number_of_changes:Number,
@@ -75,8 +74,8 @@ const media={
 const PostSchema = new Schema({
   id: { type: String, required: true, hashKey: true },
   type: { type: String, required: true, index: { global: true, rangeKey: 'creation_timestamp', name: 'type-creation_timestamp-index' } },
-  creation_timestamp: { type: Number, default: moment().unix() },
-  edit_timestamp: { type: Number, default: moment().unix() },
+  creation_timestamp: { type: Number, default: Date.now()/1000 },
+  edit_timestamp: { type: Number, default: Date.now()/1000 },
   client: { type: String },
   title: { type: String },
   link: { type: String },

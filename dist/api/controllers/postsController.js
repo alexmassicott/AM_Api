@@ -1,6 +1,5 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-const moment = require("moment");
 const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
 let setTags = require("../utils/updatetags");
@@ -70,7 +69,7 @@ function getUpdatepostParams(body) {
 function createpost(req, res, next) {
     var postid = uuid().replace(/-/g, '');
     var mediaid = uuid().replace(/-/g, '');
-    var timestamp = moment().unix();
+    var timestamp = Date.now() / 1000;
     var mediaobj = { "id": mediaid, "post_id": postid, "creation_timestamp": timestamp };
     var full_mediaobj = {
         "id": mediaid,

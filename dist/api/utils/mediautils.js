@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 /*Expressions for AWS
 */
-var moment = require('moment');
 const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
 function getPostLom(post_id) {
@@ -32,7 +31,7 @@ function updateCropData(_id, _size, _cd) {
         let _lom = data.list_of_media;
         let mo = _lom.filter(function (a) { return a.id == _id; })[0];
         mo.data[_size] = _cd;
-        mo.edit_timestamp = moment().unix();
+        mo.edit_timestamp = Date.now() / 1000;
         mo.number_of_changes += 1;
         let index = _lom.map(function (e) { return e.id; }).indexOf(_id);
         _lom[index] = mo;
@@ -62,7 +61,7 @@ function updateOriginalData(_id, _status, file) {
         mo.original_data = file;
         mo.status = _status;
         mo.number_of_changes += 1;
-        mo.edit_timestamp = moment().unix();
+        mo.edit_timestamp = Date.now() / 1000;
         var index = _lom.map(function (e) { return e.id; }).indexOf(_id);
         _lom[index] = mo;
         _lom = _lom.sort(function (a, b) {

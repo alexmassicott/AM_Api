@@ -6,6 +6,6 @@ AWS.config.update({
     secretAccessKey: process.env.secretAccessKey,
     region: process.env.region
 });
-let s3 = new AWS.S3();
+const s3 = new AWS.S3();
 exports.s3 = s3;
 //# sourceMappingURL=s3.js.map

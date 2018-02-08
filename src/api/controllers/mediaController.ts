@@ -1,5 +1,4 @@
 import {s3} from '../config/s3'
-import * as moment from 'moment'
 import * as async from 'async'
 import * as _ from 'lodash'
 import * as tinify from 'tinify'
@@ -161,7 +160,7 @@ async function createmedia(req: Request, res: Response, next: Next): Promise<any
 
    const postid=req.body.post_id;
    const mediaid=uuid().replace(/-/g, '');
-   const timestamp=moment().unix();
+   const timestamp=Date.now()/1000
    const mediaobj={
       "id": mediaid,
       "post_id": postid,

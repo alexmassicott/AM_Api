@@ -1,7 +1,6 @@
 'use strict';
-import {dynamoose} from '../config/database';
-let Schema = dynamoose.Schema;
-let moment = require('moment');
+import {dynamoose} from '../config/database'
+const Schema = dynamoose.Schema
 
 
 export interface IMedia extends dynamoose.ModelConstructor<any,any,any>{
@@ -24,7 +23,7 @@ export const mediaSchema = new Schema({
   creation_timestamp:{ type: Number },
   edit_timestamp:{
     type:Number,
-    default:moment().unix()
+    default:Date.now()/1000
   }
 
 });

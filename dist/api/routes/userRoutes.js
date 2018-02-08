@@ -1,6 +1,5 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-let passport = require("passport");
 const usersController_1 = require("../controllers/usersController");
 function default_1(app) {
     console.log('applying');

@@ -1,4 +1,4 @@
-import * as dynamoose from "dynamoose";
+import * as dynamoose from "dynamoose"
 import * as https from 'https'
 
 dynamoose.AWS.config.update({
