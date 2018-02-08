@@ -2,7 +2,6 @@
 import {dynamoose} from '../config/database'
 const Schema = dynamoose.Schema
 
-
 export interface IMedia extends dynamoose.ModelConstructor<any,any,any>{
   id:string;
   post_id:boolean;
@@ -11,7 +10,7 @@ export interface IMedia extends dynamoose.ModelConstructor<any,any,any>{
 }
 
 export const mediaSchema = new Schema({
-  id: {
+  id:{
     type: String,
     required:true,
     hashKey: true
@@ -22,10 +21,9 @@ export const mediaSchema = new Schema({
   },
   creation_timestamp:{ type: Number },
   edit_timestamp:{
-    type:Number,
-    default:Date.now()/1000
+    type: Number,
+    default: Date.now()/1000
   }
-
 });
 
 export const Media = dynamoose.model('mediaobjects', mediaSchema) as IMedia;

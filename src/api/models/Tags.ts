@@ -8,18 +8,13 @@ export interface ITag extends dynamoose.ModelConstructor<any,any,any>{
 }
 
 export const tagSchema = new Schema({
-  name: {
+  name:{
     type: String,
     required:true,
     hashKey: true
   },
   posts:{ type: [String] },
-  creation_timestamp:{ type: Number },
-  edit_timestamp:{
-    type:Number,
-    default:Date.now()/1000
-  }
-
+  creation_timestamp:{ type: Number, default:Date.now()/1000 }
 },{
   forceDefault:true
 });

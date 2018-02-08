@@ -3,8 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const User_1 = require("../models/User");
 const jwt = require("jsonwebtoken");
 const passportJWT = require("passport-jwt");
-let ExtractJwt = passportJWT.ExtractJwt, moment = require('moment');
-var jwtOptions = {};
+let ExtractJwt = passportJWT.ExtractJwt, let = jwtOptions, any = {};
 jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 jwtOptions.secretOrKey = process.env.SECRET;
 function list_all_users(req, res) {
@@ -28,15 +27,15 @@ function authenticate(req, res) {
     User_1.User.get({ username: username })
         .then((user) => {
         if (!user) {
-            res.status(401).json({ message: "no such user found" });
+            next(new Error("We can't find user in our system"));
         }
         if (user.password === req.body.password) {
-            var payload = { user: user.username };
-            var token = jwt.sign(payload, jwtOptions.secretOrKey);
+            const payload = { user: user.username };
+            const token = jwt.sign(payload, jwtOptions.secretOrKey);
             res.json({ message: "ok", token: token });
         }
         else {
-            res.status(401).json({ message: "passwords did not match" });
+            next(new Error("Invalid Aunthentification"));
         }
     });
 }

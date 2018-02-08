@@ -6,21 +6,18 @@ import * as jwt from 'jsonwebtoken'
 import * as passportJWT from 'passport-jwt'
 
 let ExtractJwt = passportJWT.ExtractJwt,
-  moment=require('moment');
-  var jwtOptions:any = {}
-  jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
-  jwtOptions.secretOrKey = process.env.SECRET;
+let jwtOptions:any = {}
+jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
+jwtOptions.secretOrKey = process.env.SECRET;
 
 export function list_all_users(req:Request, res:Response):void {
 
 };
 
 export function create_user(req:Request, res:Response):void {
-
     User.create({username: req.body.username,password:req.body.password,creation_timestamp:moment().unix()})
     .then(()=>{res.json({status:"success"})})
     .catch(err=>{ res.status(500).send(err.message);})
-
 }
 
 export function authenticate(req:Request, res:Response):void {
@@ -34,17 +31,15 @@ export function authenticate(req:Request, res:Response):void {
    // usually this would be a database call:
    User.get({username:username})
    .then((user)=>{
-   if( ! user ){
-     res.status(401).json({message:"no such user found"});
+   if( !user ){
+     next(new Error("We can't find user in our system"));
    }
-
    if(user.password === req.body.password) {
-
-     var payload = {user: user.username };
-     var token = jwt.sign(payload, jwtOptions.secretOrKey);
+     const payload = {user: user.username };
+     const token = jwt.sign(payload, jwtOptions.secretOrKey);
      res.json({message: "ok", token: token});
-   } else {
-     res.status(401).json({message:"passwords did not match"});
+   }else {
+     next(new Error("Invalid Aunthentification"));
    }
 });
 }

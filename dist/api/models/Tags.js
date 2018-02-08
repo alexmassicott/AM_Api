@@ -9,11 +9,7 @@ exports.tagSchema = new Schema({
         hashKey: true
     },
     posts: { type: [String] },
-    creation_timestamp: { type: Number },
-    edit_timestamp: {
-        type: Number,
-        default: Date.now() / 1000
-    }
+    creation_timestamp: { type: Number, default: Date.now() / 1000 }
 }, {
     forceDefault: true
 });
