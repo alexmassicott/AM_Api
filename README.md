@@ -1,25 +1,5 @@
-## Skeleton for Node.js applications written in TypeScript
+## Express Api for my portfolio site
 
-### Development
+The stack I used for this is DynamoDB Express Node and ReactJS
 
-```bash
-npm run dev
-```
-
-### Running tests
-
-```bash
-npm test
-```
-
-### Linting
-
-```bash
-npm run lint
-```
-
-### Building a container
-
-```bash
-docker build .
-```
+Docs for the API coming soon
