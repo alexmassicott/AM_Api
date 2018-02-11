@@ -1,6 +1,7 @@
 /*Expressions for AWS
 */
-import {IPost,Posts} from '../models/Posts';
+import {Posts} from '../models/Posts';
+import {IPost} from '../interfaces/ipost'
 import {Media} from '../models/MediaObjects';
 export function getPostLom(post_id): Promise<any>{
 

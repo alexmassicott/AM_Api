@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
+const errorconstants_1 = require("../constants/errorconstants");
 let setTags = require("../utils/updatetags");
 let uuid = require('uuid4');
 function get_a_post(req, res, next) {
@@ -13,7 +14,7 @@ function get_a_post(req, res, next) {
             status: "success",
             data: {
                 more_available: false,
-                LastEvaluatedKey: null,
+                LastEvaluatedKey: 0,
                 number_of_posts_returned: items.length,
                 "posts": [items]
             }
@@ -31,7 +32,7 @@ function get_a_type(req, res, next) {
             status: "success",
             data: {
                 more_available: items.lastKey ? true : false,
-                LastEvaluatedKey: items.lastKey ? items.lastKey : null,
+                LastEvaluatedKey: items.lastKey ? items.lastKey : 0,
                 number_of_posts_returned: items.length,
                 "posts": items
             }
@@ -64,18 +65,19 @@ function getUpdatepostParams(body) {
     if (body.new_featured === true || body.new_featured === false) {
         data.featured = body.new_featured;
     }
+    data.edit_timestamp = Math.floor(Date.now() / 1000);
     return data;
 }
 function createpost(req, res, next) {
     var postid = uuid().replace(/-/g, '');
     var mediaid = uuid().replace(/-/g, '');
-    var timestamp = Date.now() / 1000;
-    var mediaobj = { "id": mediaid, "post_id": postid, "creation_timestamp": timestamp };
+    var timestamp = Math.floor(Date.now() / 1000);
+    var mediaobj = { "id": mediaid, "post_id": postid };
     var full_mediaobj = {
         "id": mediaid,
         "post_id": postid,
-        "creation_timestamp": timestamp,
-        "edit_timestamp": timestamp,
+        creation_timestamp: timestamp,
+        edit_timestamp: timestamp,
         "status": "new",
         "number_of_changes": 0,
         "data": {
@@ -168,7 +170,7 @@ exports.create_a_post = create_a_post;
 ;
 function update_a_post(req, res, next) {
     if (req.user.role !== "admin")
-        next(new Error("You don't have permissions to do this task"));
+        next(new Error(errorconstants_1.PERMISSION_ERROR));
     if (req.body.id) {
         Posts_1.Posts.update({ id: req.body.id }, getUpdatepostParams(req.body))
             .then(data => {
@@ -193,7 +195,7 @@ exports.update_a_post = update_a_post;
 ;
 function delete_a_post(req, res, next) {
     if (req.user.role !== "admin")
-        next(new Error("you don't have the admissions to perform this task"));
+        next(new Error(errorconstants_1.PERMISSION_ERROR));
     if (req.body.id)
         deletepost(req, res, next);
     else

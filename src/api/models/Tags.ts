@@ -1,11 +1,8 @@
 'use strict';
 import {dynamoose} from '../config/database';
-let Schema = dynamoose.Schema;
+import {ITag} from '../interfaces/itag'
+const Schema = dynamoose.Schema;
 
-export interface ITag extends dynamoose.ModelConstructor<any,any,any>{
-  name:string;
-  visible:boolean;
-}
 
 export const tagSchema = new Schema({
   name:{
@@ -14,7 +11,7 @@ export const tagSchema = new Schema({
     hashKey: true
   },
   posts:{ type: [String] },
-  creation_timestamp:{ type: Number, default:Date.now()/1000 }
+  creation_timestamp:{ type: Number, default: Math.floor(Date.now()/1000) }
 },{
   forceDefault:true
 });

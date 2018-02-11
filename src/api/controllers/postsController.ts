@@ -2,6 +2,7 @@
 import {Posts} from '../models/Posts'
 import {Media} from '../models/MediaObjects'
 import { Request, Response } from 'express'
+import {PERMISSION_ERROR} from '../constants/errorconstants'
 let setTags=require("../utils/updatetags")
 let uuid=require('uuid4')
 
@@ -16,7 +17,7 @@ function get_a_post(req,res,next): void{
         status:"success",
         data:{
         more_available: false,
-        LastEvaluatedKey: null,
+        LastEvaluatedKey: 0,
         number_of_posts_returned:items.length,
         "posts": [items]
         }
@@ -35,7 +36,7 @@ function get_a_type(req, res, next): void{
       status:"success",
       data:{
       more_available: items.lastKey?true:false,
-      LastEvaluatedKey: items.lastKey?items.lastKey:null,
+      LastEvaluatedKey: items.lastKey?items.lastKey:0,
       number_of_posts_returned:items.length,
       "posts": items
       }
@@ -69,6 +70,7 @@ function getUpdatepostParams(body: any): any{
   if (body.new_featured===true || body.new_featured===false) {
     data.featured = body.new_featured;
   }
+  data.edit_timestamp = Math.floor(Date.now()/1000)
   return data;
 }
 
@@ -76,14 +78,14 @@ function createpost(req, res, next){
 
      var postid=uuid().replace(/-/g, '')
      var mediaid=uuid().replace(/-/g, '')
-     var timestamp=Date.now()/1000
-     var mediaobj={"id" :mediaid, "post_id" :postid, "creation_timestamp": timestamp};
+     var timestamp=Math.floor(Date.now()/1000)
+     var mediaobj={"id" :mediaid, "post_id" :postid};
 
      var full_mediaobj={
           "id": mediaid,
           "post_id": postid,
-          "creation_timestamp": timestamp,
-          "edit_timestamp": timestamp,
+          creation_timestamp: timestamp,
+          edit_timestamp: timestamp,
           "status": "new",
           "number_of_changes": 0,
           "data": {
@@ -178,7 +180,7 @@ export function create_a_post(req:Request, res:Response, next: any): void{
 
 export function update_a_post(req:Request, res:Response, next: any): void{
 
-  if(req.user.role!=="admin")next(new Error("You don't have permissions to do this task"));
+  if(req.user.role!=="admin")next(new Error(PERMISSION_ERROR));
 
   if(req.body.id){
   Posts.update({id:req.body.id}, getUpdatepostParams(req.body))
@@ -200,7 +202,7 @@ export function update_a_post(req:Request, res:Response, next: any): void{
 };
 
 export function delete_a_post(req:Request, res:Response, next: any): void{
-  if(req.user.role!=="admin")next(new Error("you don't have the admissions to perform this task"))
+  if(req.user.role!=="admin")next(new Error(PERMISSION_ERROR))
   if(req.body.id)deletepost(req,res, next);
   else next(new Error("no id specified"))
 };

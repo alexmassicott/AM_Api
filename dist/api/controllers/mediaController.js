@@ -15,6 +15,7 @@ const tinify = require("tinify");
 const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
 const mediautils_1 = require("../utils/mediautils");
+const errorconstants_1 = require("../constants/errorconstants");
 let gm = require('gm').subClass({
     imageMagick: true
 });
@@ -26,6 +27,82 @@ let pathParams, image, imageName, srcKey, typeMatch, filetype;
 let srcBucket = bucketName;
 let dstBucket = bucketName + '-output';
 ///////////////////////////////////////////
+function cropImage(req, res, next) {
+    let cropdata;
+    const _sizeArray = [req.body.crop_ratio];
+    async.forEachOf(_sizeArray, function (value, key, cb) {
+        console.log(value);
+        async.waterfall([
+            function download(next2) {
+                console.time("downloadImage");
+                s3_1.s3.getObject({
+                    Bucket: srcBucket,
+                    Key: srcKey
+                }, next);
+                console.timeEnd("downloadImage");
+            },
+            function processImage(response, next2) {
+                let cropdataparse = req.body.crop_data.split(",");
+                let x = parseInt(cropdataparse[0]);
+                let y = parseInt(cropdataparse[1]);
+                let width = parseInt(cropdataparse[2]);
+                let height = parseInt(cropdataparse[3]);
+                gm(response.Body, imageName + "." + filetype).crop(width, height, x, y).toBuffer(filetype.toUpperCase(), function (err, buffer) {
+                    if (err)
+                        return next(err);
+                    tinify.fromBuffer(buffer).toBuffer(function (err, resultData) {
+                        if (err)
+                            next(err);
+                        gm(resultData).filesize(function (err, filesize) {
+                            if (err)
+                                next(err);
+                            var bytesize = filesize.split("B");
+                            var _filesize = Math.floor(parseInt(bytesize[0]) / 1000) + "kb";
+                            cropdata = {
+                                "extension": filetype,
+                                "file_size": _filesize,
+                                "crop": {
+                                    "x": x,
+                                    "y": y,
+                                    "width": width,
+                                    "height": height
+                                },
+                                "url": 'images/' + `${imageName}` + "." + _sizeArray[key] + "." + filetype,
+                                "status": "processed"
+                            };
+                            next2(null, buffer);
+                        });
+                    });
+                });
+            },
+            function uploadResize(crop, next2) {
+                s3_1.s3.putObject({
+                    Bucket: dstBucket,
+                    Key: 'images/' + `${imageName}` + "." + value + "." + filetype,
+                    Body: crop,
+                    ContentType: filetype.toUpperCase()
+                }, next2);
+            }
+        ], (err, result) => {
+            if (err)
+                next(err);
+            else {
+                console.log("End of step " + value);
+                cb();
+            }
+        });
+    }, (err, result) => {
+        if (err)
+            next(err);
+        try {
+            mediautils_1.updateCropData(req.body.id, req.body.crop_ratio, cropdata);
+            res.json({ "status": "success" });
+        }
+        catch (err) {
+            next(err);
+        }
+    });
+}
 function updatemedia(req, res, next) {
     console.log("i'm in this bitch");
     image = req.files["file_data"][0];
@@ -60,102 +137,21 @@ function updatemedia(req, res, next) {
 ;
 function cropmedia(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
-        let post_id;
-        let cropdata;
-        console.log("crop life");
         imageName = req.body.id;
         try {
             const data = yield mediautils_1.getFullMedia(req.body.id);
-            console.log(data.list_of_media);
-            var _sizeArray = [req.body.crop_ratio];
             let mo = data.list_of_media.filter(function (a) { return a.id == req.body.id; });
             if (mo[0].original_data) {
-                console.log("yea boy");
                 srcKey = mo[0].original_data.url;
-                console.log("srcKey is" + srcKey);
                 typeMatch = srcKey.match(/\.([^.]*)$/);
                 filetype = typeMatch[1].toLowerCase();
-                cropImage();
+                cropImage(req, res, next);
             }
             else
                 throw ("Couldn't find original image for media object");
         }
         catch (err) {
             next(err);
-        }
-        function cropImage() {
-            async.forEachOf(_sizeArray, function (value, key, cb) {
-                console.log(value);
-                async.waterfall([
-                    function download(next2) {
-                        console.time("downloadImage");
-                        s3_1.s3.getObject({
-                            Bucket: srcBucket,
-                            Key: srcKey
-                        }, next);
-                        console.timeEnd("downloadImage");
-                    },
-                    function processImage(response, next2) {
-                        let cropdataparse = req.body.crop_data.split(",");
-                        let x = parseInt(cropdataparse[0]);
-                        let y = parseInt(cropdataparse[1]);
-                        let width = parseInt(cropdataparse[2]);
-                        let height = parseInt(cropdataparse[3]);
-                        gm(response.Body, imageName + "." + filetype).crop(width, height, x, y).toBuffer(filetype.toUpperCase(), function (err, buffer) {
-                            if (err)
-                                return next(err);
-                            tinify.fromBuffer(buffer).toBuffer(function (err, resultData) {
-                                if (err)
-                                    next(err);
-                                gm(resultData).filesize(function (err, filesize) {
-                                    if (err)
-                                        next(err);
-                                    var bytesize = filesize.split("B");
-                                    var _filesize = Math.floor(parseInt(bytesize[0]) / 1000) + "kb";
-                                    cropdata = {
-                                        "extension": filetype,
-                                        "file_size": _filesize,
-                                        "crop": {
-                                            "x": x,
-                                            "y": y,
-                                            "width": width,
-                                            "height": height
-                                        },
-                                        "url": 'images/' + `${imageName}` + "." + _sizeArray[key] + "." + filetype,
-                                        "status": "processed"
-                                    };
-                                    next2(null, buffer);
-                                });
-                            });
-                        });
-                    },
-                    function uploadResize(crop, next2) {
-                        s3_1.s3.putObject({
-                            Bucket: dstBucket,
-                            Key: 'images/' + `${imageName}` + "." + value + "." + filetype,
-                            Body: crop,
-                            ContentType: filetype.toUpperCase()
-                        }, next2);
-                    }
-                ], (err, result) => {
-                    if (err)
-                        next(err);
-                    else {
-                        console.log("End of step " + value);
-                        cb();
-                    }
-                });
-            }, (err, result) => {
-                if (err)
-                    next(err);
-                try {
-                    mediautils_1.updateCropData(req.body.id, req.body.crop_ratio, cropdata);
-                    res.json({ "status": "success" });
-                }
-                catch (err) {
-                    next(err);
-                }
-            });
         }
     });
 }
@@ -284,7 +280,7 @@ function deletemedia(req, res, next) {
 }
 exports.update_a_media = function (req, res, next) {
     if (req.user.role !== "admin")
-        next(new Error("you don't have the admissions to perform this task"));
+        next(new Error(errorconstants_1.PERMISSION_ERROR));
     if (req.body.action == "upload")
         updatemedia(req, res, next);
     else if (req.body.action == "crop")
@@ -294,7 +290,7 @@ exports.update_a_media = function (req, res, next) {
 };
 exports.create_a_media = function (req, res, next) {
     if (req.user.role !== "admin")
-        next(new Error("you don't have the admissions to perform this task"));
+        next(new Error(errorconstants_1.PERMISSION_ERROR));
     if (req.body.post_id)
         createmedia(req, res, next);
     else
@@ -302,7 +298,7 @@ exports.create_a_media = function (req, res, next) {
 };
 exports.delete_a_media = function (req, res, next) {
     if (req.user.role !== "admin")
-        next(new Error("you don't have the admissions to perform this task"));
+        next(new Error(errorconstants_1.PERMISSION_ERROR));
     if (req.body.id)
         deletemedia(req, res, next);
     else
@@ -310,7 +306,7 @@ exports.delete_a_media = function (req, res, next) {
 };
 exports.show_media = function (req, res, next) {
     if (req.user.role !== "admin")
-        next(new Error("you don't have the admissions to perform this task"));
+        next(new Error(errorconstants_1.PERMISSION_ERROR));
     if (req.query.post_id)
         get_medialist(req, res, next);
     else if (req.query.id)

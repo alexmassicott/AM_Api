@@ -1,7 +1,7 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../config/database");
-let Schema = database_1.dynamoose.Schema;
+const Schema = database_1.dynamoose.Schema;
 exports.tagSchema = new Schema({
     name: {
         type: String,
@@ -9,7 +9,7 @@ exports.tagSchema = new Schema({
         hashKey: true
     },
     posts: { type: [String] },
-    creation_timestamp: { type: Number, default: Date.now() / 1000 }
+    creation_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) }
 }, {
     forceDefault: true
 });

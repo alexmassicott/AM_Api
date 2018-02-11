@@ -1,6 +1,7 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
 const Tags_1 = require("../models/Tags");
+const errorconstants_1 = require("../constants/errorconstants");
 function deletetag(req, res, next) {
     Tags_1.Tags.delete({ name: req.body.name })
         .then(() => {
@@ -30,7 +31,7 @@ function gettags(req, res, next) {
 }
 function delete_a_tag(req, res, next) {
     if (req.user.role !== "admin")
-        next(new Error("you don't have the admissions to perform this task"));
+        next(new Error(errorconstants_1.PERMISSION_ERROR));
     if (req.body.name)
         deletetag(req, res, next);
     else
@@ -40,7 +41,7 @@ exports.delete_a_tag = delete_a_tag;
 ;
 function create_tag(req, res, next) {
     if (req.user.role !== "admin")
-        next(new Error("you don't have the admissions to perform this task"));
+        next(new Error(errorconstants_1.PERMISSION_ERROR));
     if (req.body.name)
         createtag(req, res, next);
     else
@@ -50,7 +51,7 @@ exports.create_tag = create_tag;
 ;
 function get_tags(req, res, next) {
     if (req.user.role !== "admin")
-        next(new Error("you don't have the admissions to perform this task"));
+        next(new Error(errorconstants_1.PERMISSION_ERROR));
     gettags(req, res, next);
 }
 exports.get_tags = get_tags;

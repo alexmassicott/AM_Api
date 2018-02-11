@@ -1,13 +1,7 @@
 'use strict';
 import {dynamoose} from '../config/database'
+import {IMedia} from '../interfaces/imedia'
 const Schema = dynamoose.Schema
-
-export interface IMedia extends dynamoose.ModelConstructor<any,any,any>{
-  id:string;
-  post_id:boolean;
-  creation_timestamp:boolean;
-  edit_timestamp:boolean;
-}
 
 export const mediaSchema = new Schema({
   id:{
@@ -19,8 +13,8 @@ export const mediaSchema = new Schema({
     type: String,
     default: null
   },
-  creation_timestamp:{ type: Number, default: Date.now()/1000 },
-  edit_timestamp:{ type: Number, default: Date.now()/1000 }
+  creation_timestamp:{ type: Number, default: Math.floor(Date.now()/1000) },
+  edit_timestamp:{ type: Number, default: Math.floor(Date.now()/1000) }
 });
 
 export const Media = dynamoose.model('mediaobjects', mediaSchema) as IMedia;

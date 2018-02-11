@@ -1,12 +1,8 @@
 'use strict';
 import {dynamoose} from '../config/database'
+import {IContent} from '../interfaces/icontent'
 const Schema = dynamoose.Schema
 
-export interface IContent extends dynamoose.ModelConstructor<any,any,any>{
-  feed:string;
-  posts:Array<string>;
-  edit_timestamp:number;
-}
 
 export const contentSchema = new Schema({
   feed: {
@@ -17,9 +13,8 @@ export const contentSchema = new Schema({
   posts:{type: [String]},
   edit_timestamp:{
     type:Number,
-    default:Date.now()/1000
+    default:Math.floor(Date.now()/1000)
   }
-
 },{
   forceDefault:true
 });

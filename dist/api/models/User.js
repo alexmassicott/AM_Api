@@ -6,8 +6,8 @@ const schema = new Schema({
     username: { type: String, hashKey: true, required: true },
     password: { type: String },
     role: { type: String },
-    creation_timestamp: { type: Number, default: Date.now() / 1000 },
-    edit_timestamp: { type: Number, default: Date.now() / 1000 }
+    creation_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) },
+    edit_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) }
 });
 exports.User = database_1.dynamoose.model('users', schema);
 //# sourceMappingURL=User.js.map

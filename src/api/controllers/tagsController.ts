@@ -1,6 +1,7 @@
 'use strict';
 import { Tags } from '../models/Tags';
 import { Response, Request } from 'express';
+import {PERMISSION_ERROR} from '../constants/errorconstants'
 
 function deletetag(req:Request ,res:Response, next: any): void{
   Tags.delete({name:req.body.name})
@@ -31,20 +32,20 @@ function gettags(req:Request, res:Response, next: any): void{
 }
 
 export function delete_a_tag(req:Request, res:Response, next: any): void {
-  if(req.user.role!=="admin")next(new Error("you don't have the admissions to perform this task"))
+  if(req.user.role!=="admin")next(new Error(PERMISSION_ERROR))
   if (req.body.name)deletetag(req, res, next);
   else next(new Error("no name parameter specified"))
 
 };
 
 export function create_tag(req:Request, res:Response, next: any): void{
-  if(req.user.role!=="admin")next(new Error("you don't have the admissions to perform this task"))
+  if(req.user.role!=="admin")next(new Error(PERMISSION_ERROR))
   if (req.body.name)createtag(req, res, next);
   else next(new Error("no name parameter specified"))
 
 };
 
 export function get_tags(req:Request, res:Response, next: any) {
-  if(req.user.role!=="admin")next(new Error("you don't have the admissions to perform this task"))
+  if(req.user.role!=="admin")next(new Error(PERMISSION_ERROR))
   gettags(req, res, next);
 };

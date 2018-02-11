@@ -1,6 +1,7 @@
 'use strict';
 import * as _ from 'lodash'
-import { IPost, Posts } from '../models/Posts'
+import { Posts } from '../models/Posts'
+import { IPost } from '../interfaces/ipost'
 import { Tags } from '../models/Tags'
 import { Response, Request } from 'express'
 //////////////

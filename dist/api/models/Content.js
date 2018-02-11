@@ -11,7 +11,7 @@ exports.contentSchema = new Schema({
     posts: { type: [String] },
     edit_timestamp: {
         type: Number,
-        default: Date.now() / 1000
+        default: Math.floor(Date.now() / 1000)
     }
 }, {
     forceDefault: true
