@@ -81,4 +81,7 @@ function updateOriginalData(_id, _status, file) {
     });
 }
 exports.updateOriginalData = updateOriginalData;
+function updateVideoData(req) {
+}
+exports.updateVideoData = updateVideoData;
 //# sourceMappingURL=mediautils.js.map

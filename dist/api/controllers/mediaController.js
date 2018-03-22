@@ -104,35 +104,49 @@ function cropImage(req, res, next) {
     });
 }
 function updatemedia(req, res, next) {
-    console.log("i'm in this bitch");
     image = req.files["file_data"][0];
     typeMatch = req.files["file_data"][0].originalname.match(/\.([^.]*)$/);
     filetype = typeMatch[1].toLowerCase();
     imageName = req.body.id;
-    var url = 'images/' + `${imageName}` + "." + filetype;
-    var metadata = _.pick(req.files["file_data"][0], ['originalname', 'size', 'mimetype', 'encoding']);
+    const url = 'images/' + `${imageName}` + "." + filetype;
+    let metadata = _.pick(req.files["file_data"][0], ['originalname', 'size', 'mimetype', 'encoding']);
     metadata.url = url;
-    tinify.fromBuffer(req.files["file_data"][0].buffer).toBuffer(function (err, resultData) {
-        if (err)
-            next(err);
-        let s3params = {
-            Bucket: bucketName,
-            Key: url,
-            Body: resultData,
-            ContentType: 'image/' + filetype
-        };
+    let s3params = {
+        Bucket: bucketName,
+        Key: url,
+        Body: resultData,
+        ContentType: 'image/' + filetype
+    };
+    if (req.body.type == "image") {
+        tinify.fromBuffer(req.files["file_data"][0].buffer).toBuffer(function (err, resultData) {
+            if (err)
+                next(err);
+            s3_1.s3.putObject(s3params, function (err, data) {
+                if (err)
+                    next(err);
+                try {
+                    mediautils_1.updateOriginalData(req.body.id, "complete", metadata);
+                    res.json({ status: "success" });
+                }
+                catch (err) {
+                    next(err);
+                }
+            });
+        });
+    }
+    else if (req.body.type == "video") {
         s3_1.s3.putObject(s3params, function (err, data) {
             if (err)
                 next(err);
             try {
-                mediautils_1.updateOriginalData(req.body.id, "complete", metadata);
+                updateVideoData(req, "complete", metadata);
                 res.json({ status: "success" });
             }
             catch (err) {
                 next(err);
             }
         });
-    });
+    }
 }
 ;
 function cropmedia(req, res, next) {

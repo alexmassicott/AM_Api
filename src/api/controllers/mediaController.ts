@@ -2,12 +2,12 @@ import {s3} from '../config/s3'
 import * as async from 'async'
 import * as _ from 'lodash'
 import * as tinify from 'tinify'
-import {Posts} from '../models/Posts'
-import {IPostMedia} from '../interfaces/ipostMedia'
-import {Media} from '../models/MediaObjects'
-import {updateOriginalData,getFullMedia,updateCropData,getPostLom} from '../utils/mediautils'
+import { Posts } from '../models/Posts'
+import { IPostMedia } from '../interfaces/ipostMedia'
+import { Media } from '../models/MediaObjects'
+import { updateOriginalData, getFullMedia, updateCropData, getPostLom } from '../utils/mediautils'
 import { Response, Request } from 'express'
-import {PERMISSION_ERROR} from '../constants/errorconstants'
+import { PERMISSION_ERROR } from '../constants/errorconstants'
 let gm = require('gm').subClass({
   imageMagick: true
 })
@@ -102,35 +102,47 @@ function cropImage(req, res, next){
 }
 
 function updatemedia(req: Request, res: Response, next: any): void{
-
-    console.log("i'm in this bitch")
     image = req.files["file_data"][0];
     typeMatch = req.files["file_data"][0].originalname.match(/\.([^.]*)$/);
     filetype = typeMatch[1].toLowerCase();
     imageName =  req.body.id;
-    var url = 'images/' + `${imageName}` + "." + filetype;
-    var metadata=_.pick(req.files["file_data"][0], ['originalname', 'size','mimetype','encoding']);
+    const url = 'images/' + `${imageName}` + "." + filetype;
+    let metadata=_.pick(req.files["file_data"][0], ['originalname', 'size','mimetype','encoding']);
     metadata.url=url;
+    let s3params ={
+      Bucket: bucketName,
+      Key: url,
+      Body: resultData,
+      ContentType: 'image/'+filetype
+    };
 
+    if(req.body.type == "image"){
     tinify.fromBuffer(req.files["file_data"][0].buffer).toBuffer(function(err, resultData) {
-        if(err)next(err)
-        let s3params =  {
-                Bucket: bucketName,
-                Key: url,
-                Body: resultData,
-                ContentType: 'image/'+filetype
-        };
-        s3.putObject(s3params, function(err, data) {
-          if (err)next(err)
-          try{
-            updateOriginalData(req.body.id,"complete", metadata)
-            res.json({status:"success"});
-          }
-          catch(err){
-            next(err)
-          }
+      if(err)next(err)
+      s3.putObject(s3params, function(err, data) {
+        if (err)next(err)
+        try{
+          updateOriginalData(req.body.id,"complete", metadata)
+          res.json({status:"success"});
+        }
+        catch(err){
+          next(err)
+        }
       });
     });
+  }
+  else if(req.body.type == "video"){
+    s3.putObject(s3params, function(err, data) {
+      if (err)next(err)
+      try{
+        updateVideoData(req,"complete", metadata)
+        res.json({status:"success"});
+      }
+      catch(err){
+        next(err)
+      }
+    });
+  }
 };
 
 async function cropmedia(req: Request,res: Response, next: any): Promise<void>{
@@ -287,24 +299,28 @@ async function deletemedia(req: Request,res: Response, next: any): Promise<any>{
 }
 
 export const update_a_media = function (req: Request, res: Response, next: any): void{
-  if(req.user.role!=="admin")next(new Error(PERMISSION_ERROR))
-
-  if (req.body.action=="upload")updatemedia(req, res, next)
-  else if(req.body.action=="crop")cropmedia(req, res, next)
+  if(req.user.role!=="admin")
+    next(new Error(PERMISSION_ERROR))
+  if (req.body.action=="upload")
+    updatemedia(req, res, next)
+  else if(req.body.action=="crop")
+    cropmedia(req, res, next)
   else next(new Error("missing action parameters"))
 }
 
 export const create_a_media = function(req: Request, res: Response, next: any): void{
-  if(req.user.role!=="admin")next(new Error(PERMISSION_ERROR))
-  if(req.body.post_id)createmedia(req, res, next)
-  else next(new Error("post id or media id not specified"))
+  if(req.user.role!=="admin")
+    next(new Error(PERMISSION_ERROR))
+  if(req.body.post_id)
+    createmedia(req, res, next)
+  else
+    next(new Error("post id or media id not specified"))
 }
 
 export const delete_a_media = function (req: Request, res: Response, next: any): void{
   if(req.user.role!=="admin")next(new Error(PERMISSION_ERROR))
   if (req.body.id)deletemedia(req, res, next)
   else next(new Error("post id or media id not specified"))
-
 }
 
 export const show_media = function(req: Request, res: Response, next: any): void{

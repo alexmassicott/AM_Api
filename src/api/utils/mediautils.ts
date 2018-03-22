@@ -44,8 +44,6 @@ export async function updateCropData(_id:string, _size:any, _cd:any): Promise<an
 
   return Promise.resolve(Posts.update({id:_pid},{list_of_media:_lom}));
 
-
-
 }
 
 export async function updateOriginalData(_id:string, _status:string, file:any): Promise<any>{
@@ -73,5 +71,12 @@ export async function updateOriginalData(_id:string, _status:string, file:any): 
   });
 
  return Promise.resolve(Posts.update({id:_pid},{list_of_media:_lom}))
+
+}
+
+
+
+export function updateVideoData(req){
+
 
 }

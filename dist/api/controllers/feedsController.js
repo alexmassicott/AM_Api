@@ -2,12 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Posts_1 = require("../models/Posts");
 const Content_1 = require("../models/Content");
+const mapOrder_1 = require("../utils/mapOrder");
 //////////////
 function getfeeds(req, res, next) {
-    // ["work", "showcase", "news"]
     let count = 0;
     const promises = req.query.feed.reduce((acc, type) => {
-        // acc.push(Promise.resolve(Posts.query('type').eq(type).where("publication_status").eq("live").exec()));
         acc.push(Content_1.Content.get({ feed: "list_of_live_" + type })
             .then(items => {
             return Promise.resolve(Posts_1.Posts.batchGet(items.posts.map(item => { return { id: item }; })));
@@ -19,7 +18,8 @@ function getfeeds(req, res, next) {
         const feed = items.reduce(function (arr, row) {
             return arr.concat(row);
         }, []);
-        res.json({ status: "success", data: { posts: feed } });
+        let orderList = mapOrder_1.mapOrder(feed, items, 'id');
+        res.json({ status: "success", data: { posts: orderList } });
     })
         .catch(err => { next(err); });
 }
