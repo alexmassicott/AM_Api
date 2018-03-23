@@ -4,9 +4,8 @@ import { Posts } from '../models/Posts';
 import { Content } from '../models/Content';
 import { mapOrder } from '../utils/mapOrder'
 import { IPost } from '../interfaces/ipost'
-//////////////
 
-function getfeeds(req:Request, res:Response, next: Function):void{
+function getfeeds(req:any, res:any, next: any):void{
   let count=0;
   const promises = req.query.feed.reduce((acc:Array<any>, type: String) => {
   acc.push(Content.get({feed:"list_of_live_"+type})
@@ -23,8 +22,6 @@ function getfeeds(req:Request, res:Response, next: Function):void{
   })
   .catch(err=>{next(err)})
 }
-
-
 
 export function get_feed(req:Request, res:Response, next: Function):void {
   if (req.query.feed)getfeeds(req, res, next);

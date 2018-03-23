@@ -6,6 +6,5 @@ describe('App', () => {
     supertest(app)
       .get('/')
       .expect('Content-Type', /json/)
-      .expect(200)
-  )
+      .expect(200))
 })

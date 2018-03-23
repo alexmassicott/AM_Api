@@ -1,25 +1,22 @@
-
 /**
  * Sort array of objects based on another array
  */
 
-export function mapOrder (array:any[], order:any[], key:string) {
-
-  array.sort( function (a, b) {
-    var A = a[key], B = b[key];
+export function mapOrder (array: any[], order: any[], key: string) {
+  array.sort((a, b) => {
+    let A = a[key],
+      B = b[key]
 
     if (order.indexOf(A) > order.indexOf(B)) {
-      return 1;
-    } else {
-      return -1;
+      return 1
     }
+    return -1
+  })
 
-  });
+  return array
+}
 
-  return array;
-};
-
-// 
+//
 // /**
 //  * Example:
 //  */

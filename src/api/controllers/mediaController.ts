@@ -5,7 +5,7 @@ import * as tinify from 'tinify'
 import { Posts } from '../models/Posts'
 import { IPostMedia } from '../interfaces/ipostMedia'
 import { Media } from '../models/MediaObjects'
-import { updateOriginalData, getFullMedia, updateCropData, getPostLom } from '../utils/mediautils'
+import { updateOriginalData, getFullMedia, updateCropData, getPostLom, updateVideoData } from '../utils/mediautils'
 import { Response, Request } from 'express'
 import { PERMISSION_ERROR } from '../constants/errorconstants'
 let gm = require('gm').subClass({
@@ -13,320 +13,310 @@ let gm = require('gm').subClass({
 })
 let uuid=require('uuid4')
 
-////////////////////////////////////////
-tinify.key = process.env.TINIFY_KEY;
-const bucketName = 'alexmassbucket';
-let pathParams, image, imageName, srcKey,typeMatch,filetype;
-let srcBucket = bucketName;
-let dstBucket = bucketName + '-output';
-///////////////////////////////////////////
-function cropImage(req, res, next){
-  let cropdata;
-  const _sizeArray = [req.body.crop_ratio];
+tinify.key = process.env.TINIFY_KEY
+const bucketName = 'alexmassbucket'
+let pathParams,
+  image,
+  imageName,
+  srcKey,
+  typeMatch,
+  filetype
+const srcBucket = bucketName
+const dstBucket = `${bucketName}-output`
+// /////////////////////////////////////////
+function cropImage (req, res, next) {
+  let cropdata
+  const _sizeArray = [req.body.crop_ratio]
 
-  async.forEachOf(_sizeArray, function(value, key, cb) {
-    console.log(value);
-    async.waterfall([
-      function download(next2) {
-        console.time("downloadImage");
-        s3.getObject({
-          Bucket: srcBucket,
-          Key: srcKey
-        }, next);
-        console.timeEnd("downloadImage");
-      },
-      function processImage(response, next2) {
+  async.forEachOf(
+    _sizeArray,
+    (value, key, cb) => {
+      console.log(value)
+      async.waterfall(
+        [
+          function download (next2) {
+            console.time('downloadImage')
+            s3.getObject(
+              {
+                Bucket: srcBucket,
+                Key: srcKey
+              },
+              next
+            )
+            console.timeEnd('downloadImage')
+          },
+          function processImage (response, next2) {
+            const cropdataparse = req.body.crop_data.split(',')
+            const x = parseInt(cropdataparse[0])
+            const y = parseInt(cropdataparse[1])
+            const width = parseInt(cropdataparse[2])
+            const height = parseInt(cropdataparse[3])
+            gm(response.Body, `${imageName}.${filetype}`)
+              .crop(width, height, x, y)
+              .toBuffer(filetype.toUpperCase(), (err, buffer) => {
+                if (err) return next(err)
 
-        let cropdataparse=req.body.crop_data.split(",");
-        let x = parseInt(cropdataparse[0]);
-        let y = parseInt(cropdataparse[1]);
-        let width = parseInt(cropdataparse[2]);
-        let height = parseInt(cropdataparse[3]);
-        gm(response.Body, imageName + "." + filetype).crop(width, height, x, y).toBuffer(
-          filetype.toUpperCase(),
-          function(err,buffer) {
-            if (err)return next(err);
+                tinify.fromBuffer(buffer).toBuffer((err, resultData) => {
+                  if (err) next(err)
 
-            tinify.fromBuffer(buffer).toBuffer(function(err, resultData) {
-              if (err) next(err);
+                  gm(resultData).filesize((err, filesize) => {
+                    if (err) next(err)
+                    const bytesize = filesize.split('B')
+                    const _filesize = `${Math.floor(parseInt(bytesize[0]) / 1000)}kb`
 
-              gm(resultData).filesize(function(err, filesize) {
-                if(err)next(err);
-                var bytesize = filesize.split("B");
-                var _filesize = Math.floor(parseInt(bytesize[0]) / 1000) + "kb";
-
-                cropdata = {
-                  "extension": filetype,
-                  "file_size": _filesize,
-                  "crop": {
-                    "x": x,
-                    "y": y,
-                    "width": width,
-                    "height": height
-                  },
-                  "url": 'images/' + `${imageName}` + "." + _sizeArray[key] + "." + filetype,
-                  "status": "processed"
-                };
-                next2(null, buffer);
-                });
-              });
-          });
-      },
-      function uploadResize(crop, next2) {
-
-        s3.putObject({
-          Bucket: dstBucket,
-          Key: 'images/' + `${imageName}` + "." + value + "." + filetype,
-          Body: crop,
-          ContentType: filetype.toUpperCase()
-        }, next2);
-      }
-    ], (err, result) => {
-      if (err)next(err)
-      else{
-      console.log("End of step " + value);
-      cb();
-    }
-    });
-  }, (err, result) => {
-    if(err)next(err)
-
-    try{
-    updateCropData(req.body.id, req.body.crop_ratio, cropdata)
-    res.json({ "status": "success"});
-    }
-    catch(err){
-      next(err)
-    }
-  })
-}
-
-function updatemedia(req: Request, res: Response, next: any): void{
-    image = req.files["file_data"][0];
-    typeMatch = req.files["file_data"][0].originalname.match(/\.([^.]*)$/);
-    filetype = typeMatch[1].toLowerCase();
-    imageName =  req.body.id;
-    const url = 'images/' + `${imageName}` + "." + filetype;
-    let metadata=_.pick(req.files["file_data"][0], ['originalname', 'size','mimetype','encoding']);
-    metadata.url=url;
-    let s3params ={
-      Bucket: bucketName,
-      Key: url,
-      Body: resultData,
-      ContentType: 'image/'+filetype
-    };
-
-    if(req.body.type == "image"){
-    tinify.fromBuffer(req.files["file_data"][0].buffer).toBuffer(function(err, resultData) {
-      if(err)next(err)
-      s3.putObject(s3params, function(err, data) {
-        if (err)next(err)
-        try{
-          updateOriginalData(req.body.id,"complete", metadata)
-          res.json({status:"success"});
+                    cropdata = {
+                      extension: filetype,
+                      file_size: _filesize,
+                      crop: {
+                        x,
+                        y,
+                        width,
+                        height
+                      },
+                      url: `${'images/' + `${imageName}` + '.'}${_sizeArray[key]}.${filetype}`,
+                      status: 'processed'
+                    }
+                    next2(null, buffer)
+                  })
+                })
+              })
+          },
+          function uploadResize (crop, next2) {
+            s3.putObject(
+              {
+                Bucket: dstBucket,
+                Key: `${'images/' + `${imageName}` + '.'}${value}.${filetype}`,
+                Body: crop,
+                ContentType: filetype.toUpperCase()
+              },
+              next2
+            )
+          }
+        ],
+        (err, result) => {
+          if (err) next(err)
+          else {
+            console.log(`End of step ${value}`)
+            cb()
+          }
         }
-        catch(err){
-          next(err)
-        }
-      });
-    });
-  }
-  else if(req.body.type == "video"){
-    s3.putObject(s3params, function(err, data) {
-      if (err)next(err)
-      try{
-        updateVideoData(req,"complete", metadata)
-        res.json({status:"success"});
-      }
-      catch(err){
+      )
+    },
+    (err, result) => {
+      if (err) next(err)
+
+      try {
+        updateCropData(req.body.id, req.body.crop_ratio, cropdata)
+        res.json({ status: 'success' })
+      } catch (err) {
         next(err)
       }
-    });
-  }
-};
-
-async function cropmedia(req: Request,res: Response, next: any): Promise<void>{
-
-    imageName = req.body.id;
-    try{
-      const data = await getFullMedia(req.body.id)
-      let mo:IPostMedia[] = data.list_of_media.filter(function(a){return a.id==req.body.id});
-      if (mo[0].original_data) {
-        srcKey = mo[0].original_data.url;
-        typeMatch = srcKey.match(/\.([^.]*)$/);
-        filetype = typeMatch[1].toLowerCase();
-        cropImage(req, res, next);
-      }
-      else throw ("Couldn't find original image for media object");
     }
-    catch(err){
-      next(err)
-    }
-
+  )
 }
 
-async function createmedia(req: Request, res: Response, next: any): Promise<any>{
-
-   const postid=req.body.post_id;
-   const mediaid=uuid().replace(/-/g, '');
-   const timestamp=Date.now()/1000
-   const mediaobj={
-      "id": mediaid,
-      "post_id": postid,
-      "creation_timestamp": timestamp,
-      "edit_timestamp": timestamp,
-      "status": "new",
-      "number_of_changes": 0,
-      "data": {
-        "status": "new"
-      }
-    };
-
-  try{
-   const data = await getPostLom(postid)
-   let list_of_media=data.list_of_media;
-   list_of_media.push(mediaobj);
-   Posts.update({id:postid},{list_of_media:list_of_media})
-   .then(() => {
-   return Promise.resolve(Media.create(mediaobj));
-   })
-   .then(()=>{
-     res.json({
-       "status": "success",
-       "data":
-       {
-       "id": mediaid
-       }
-     });
-   })
+function updatemedia (req: Request, res: Response, next: any): void {
+  const image = req.files.file_data[0]
+  const typeMatch = req.files.file_data[0].originalname.match(/\.([^.]*)$/)
+  const filetype = typeMatch[1].toLowerCase()
+  const imageName = req.body.id
+  const url = `${'images/' + `${imageName}` + '.'}${filetype}`
+  const metadata = _.pick(req.files.file_data[0], ['originalname', 'size', 'mimetype', 'encoding'])
+  metadata.url = url
+  const s3params = {
+    Bucket: bucketName,
+    Key: url,
+    Body: resultData,
+    ContentType: `image/${filetype}`
   }
-  catch(err){
-    next(err)
-  }
-}
 
-async function get_a_media(req,res,next): Promise<void>{
-
-  const id = req.query.id;
-  try{
-  const data = await getFullMedia(id)
-  const list_of_media=data.list_of_media;
-  const mo:IPostMedia = list_of_media.filter(function(a){return a.id==id})[0];
-  res.json({
-    "status": "success",
-    "data": {
-      "media": [mo]
-    }
-  });
-  }
-  catch(err){
-    next(err)
-  }
-}
-
-function get_medialist(req, res, next){
-  console.log("in list");
-  let post_id = req.query.post_id;
-
-  getPostLom(post_id).then((data) => {
-
-    let sortedArray = data.list_of_media;
-    if (sortedArray.length > 1) {
-      sortedArray =  data.list_of_media.sort(function(a, b) {
-        let aa = a.creation_timestamp,
-          bb = b.creation_timestamp;
-        //  console.log(aa);
-        if (aa !== bb) {
-          if (aa > bb) {
-            return 1;
-          }
-          if (aa < bb) {
-            return -1;
-          }
+  if (req.body.type == 'image') {
+    tinify.fromBuffer(req.files.file_data[0].buffer).toBuffer((err, resultData) => {
+      if (err) next(err)
+      s3.putObject(s3params, (err, data) => {
+        if (err) next(err)
+        try {
+          updateOriginalData(req.body.id, 'complete', metadata)
+          res.json({ status: 'success' })
+        } catch (err) {
+          next(err)
         }
-        return aa - bb;
       })
-
-    }
-    res.json({
-      "status": "success",
-      "data": {
-        "media": sortedArray
-      }});
-
-  }).catch((err) => {
-      next(err)
-  });
+    })
+  } else if (req.body.type == 'video') {
+    s3.putObject(s3params, (err, data) => {
+      if (err) next(err)
+      try {
+        updateVideoData(req, 'complete', metadata)
+        res.json({ status: 'success' })
+      } catch (err) {
+        next(err)
+      }
+    })
+  }
 }
 
-async function deletemedia(req: Request,res: Response, next: any): Promise<any>{
+async function cropmedia (req: Request, res: Response, next: any): Promise<void> {
+  imageName = req.body.id
+  try {
+    const data = await getFullMedia(req.body.id)
+    const mo: IPostMedia[] = data.list_of_media.filter((a) => a.id == req.body.id)
+    if (mo[0].original_data) {
+      srcKey = mo[0].original_data.url
+      typeMatch = srcKey.match(/\.([^.]*)$/)
+      filetype = typeMatch[1].toLowerCase()
+      cropImage(req, res, next)
+    } else throw "Couldn't find original image for media object"
+  } catch (err) {
+    next(err)
+  }
+}
 
-  let post_id=req.body.post_id;
-  let updatedList;
-  let media_id = req.body.id;
-  try{
+async function createmedia (req: Request, res: Response, next: any): Promise<any> {
+  const postid = req.body.post_id
+  const mediaid = uuid().replace(/-/g, '')
+  const timestamp = Date.now() / 1000
+  const mediaobj = {
+    id: mediaid,
+    post_id: postid,
+    creation_timestamp: timestamp,
+    edit_timestamp: timestamp,
+    status: 'new',
+    number_of_changes: 0,
+    data: {
+      status: 'new'
+    }
+  }
+
+  try {
+    const data = await getPostLom(postid)
+    const list_of_media = data.list_of_media
+    list_of_media.push(mediaobj)
+    Posts.update({ id: postid }, { list_of_media })
+      .then(() => Promise.resolve(Media.create(mediaobj)))
+      .then(() => {
+        res.json({
+          status: 'success',
+          data: {
+            id: mediaid
+          }
+        })
+      })
+  } catch (err) {
+    next(err)
+  }
+}
+
+async function get_a_media (req, res, next): Promise<void> {
+  const id = req.query.id
+  try {
+    const data = await getFullMedia(id)
+    const list_of_media = data.list_of_media
+    const mo: IPostMedia = list_of_media.filter((a) => a.id == id)[0]
+    res.json({
+      status: 'success',
+      data: {
+        media: [mo]
+      }
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+function get_medialist (req, res, next) {
+  console.log('in list')
+  const post_id = req.query.post_id
+
+  getPostLom(post_id)
+    .then((data) => {
+      let sortedArray = data.list_of_media
+      if (sortedArray.length > 1) {
+        sortedArray = data.list_of_media.sort((a, b) => {
+          let aa = a.creation_timestamp,
+            bb = b.creation_timestamp
+          //  console.log(aa);
+          if (aa !== bb) {
+            if (aa > bb) {
+              return 1
+            }
+            if (aa < bb) {
+              return -1
+            }
+          }
+          return aa - bb
+        })
+      }
+      res.json({
+        status: 'success',
+        data: {
+          media: sortedArray
+        }
+      })
+    })
+    .catch((err) => {
+      next(err)
+    })
+}
+
+async function deletemedia (req: Request, res: Response, next: any): Promise<any> {
+  const post_id = req.body.post_id
+  let updatedList
+  const media_id = req.body.id
+  try {
     const data = await getPostLom(post_id)
     let updatedList = _.remove(data.list_of_media, {
       id: media_id
-    });
+    })
 
     if (updatedList.length > 1) {
-      updatedList = updatedList.sort(function(a, b) {
-        var aa = a.creation_timestamp,
-          bb = b.creation_timestamp;
+      updatedList = updatedList.sort((a, b) => {
+        let aa = a.creation_timestamp,
+          bb = b.creation_timestamp
         //  console.log(aa);
-          if (aa !== bb) {
-            if (aa > bb) {
-              return 1;
-            }
-            if (aa < bb) {
-              return -1;
-            }
+        if (aa !== bb) {
+          if (aa > bb) {
+            return 1
           }
-          return aa - bb;
-        });
+          if (aa < bb) {
+            return -1
+          }
+        }
+        return aa - bb
+      })
     }
 
-   Posts.update({list_of_media:updatedList})
-   .then(()=> Promise.resolve(Media.delete({id:media_id})))
-   .then(()=>{
-    res.json({"status" : "success"})
-    })
-  }
-  catch(err){
+    Posts.update({ list_of_media: updatedList })
+      .then(() => Promise.resolve(Media.delete({ id: media_id })))
+      .then(() => {
+        res.json({ status: 'success' })
+      })
+  } catch (err) {
     next(err)
   }
 }
 
-export const update_a_media = function (req: Request, res: Response, next: any): void{
-  if(req.user.role!=="admin")
-    next(new Error(PERMISSION_ERROR))
-  if (req.body.action=="upload")
-    updatemedia(req, res, next)
-  else if(req.body.action=="crop")
-    cropmedia(req, res, next)
-  else next(new Error("missing action parameters"))
+export const update_a_media = function (req: Request, res: Response, next: any): void {
+  if (req.user.role !== 'admin') next(new Error(PERMISSION_ERROR))
+  if (req.body.action == 'upload') updatemedia(req, res, next)
+  else if (req.body.action == 'crop') cropmedia(req, res, next)
+  else next(new Error('missing action parameters'))
 }
 
-export const create_a_media = function(req: Request, res: Response, next: any): void{
-  if(req.user.role!=="admin")
-    next(new Error(PERMISSION_ERROR))
-  if(req.body.post_id)
-    createmedia(req, res, next)
-  else
-    next(new Error("post id or media id not specified"))
+export const create_a_media = function (req: Request, res: Response, next: any): void {
+  if (req.user.role !== 'admin') next(new Error(PERMISSION_ERROR))
+  if (req.body.post_id) createmedia(req, res, next)
+  else next(new Error('post id or media id not specified'))
 }
 
-export const delete_a_media = function (req: Request, res: Response, next: any): void{
-  if(req.user.role!=="admin")next(new Error(PERMISSION_ERROR))
-  if (req.body.id)deletemedia(req, res, next)
-  else next(new Error("post id or media id not specified"))
+export const delete_a_media = function (req: Request, res: Response, next: any): void {
+  if (req.user.role !== 'admin') next(new Error(PERMISSION_ERROR))
+  if (req.body.id) deletemedia(req, res, next)
+  else next(new Error('post id or media id not specified'))
 }
 
-export const show_media = function(req: Request, res: Response, next: any): void{
-  if(req.user.role!=="admin")next(new Error(PERMISSION_ERROR))
-   if(req.query.post_id)get_medialist(req, res, next);
-   else if(req.query.id)get_a_media(req, res, next);
-   else next(new Error("post id or media id not specified"))
-
-};
+export const show_media = function (req: Request, res: Response, next: any): void {
+  if (req.user.role !== 'admin') next(new Error(PERMISSION_ERROR))
+  if (req.query.post_id) get_medialist(req, res, next)
+  else if (req.query.id) get_a_media(req, res, next)
+  else next(new Error('post id or media id not specified'))
+}
