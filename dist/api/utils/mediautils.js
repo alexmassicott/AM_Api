@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-/*Expressions for AWS
+/* Expressions for AWS
 */
 const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
@@ -27,16 +27,18 @@ exports.getFullMedia = getFullMedia;
 function updateCropData(_id, _size, _cd) {
     return __awaiter(this, void 0, void 0, function* () {
         const data = yield getFullMedia(_id);
-        let _pid = data.id;
+        const _pid = data.id;
         let _lom = data.list_of_media;
-        let mo = _lom.filter(function (a) { return a.id == _id; })[0];
+        const mo = _lom.filter((a) => a.id == _id)[0];
         mo.data[_size] = _cd;
         mo.edit_timestamp = Date.now() / 1000;
         mo.number_of_changes += 1;
-        let index = _lom.map(function (e) { return e.id; }).indexOf(_id);
+        const index = _lom
+            .map((e) => e.id)
+            .indexOf(_id);
         _lom[index] = mo;
-        _lom = _lom.sort(function (a, b) {
-            var aa = a.creation_timestamp, bb = b.creation_timestamp;
+        _lom = _lom.sort((a, b) => {
+            let aa = a.creation_timestamp, bb = b.creation_timestamp;
             //  console.log(aa);
             if (aa !== bb) {
                 if (aa > bb) {
@@ -57,15 +59,17 @@ function updateOriginalData(_id, _status, file) {
         const data = yield getFullMedia(_id);
         const _pid = data.id;
         let _lom = data.list_of_media;
-        let mo = _lom.filter(function (a) { return a.id == _id; })[0];
+        const mo = _lom.filter((a) => a.id == _id)[0];
         mo.original_data = file;
         mo.status = _status;
         mo.number_of_changes += 1;
         mo.edit_timestamp = Date.now() / 1000;
-        var index = _lom.map(function (e) { return e.id; }).indexOf(_id);
+        const index = _lom
+            .map((e) => e.id)
+            .indexOf(_id);
         _lom[index] = mo;
-        _lom = _lom.sort(function (a, b) {
-            var aa = a.creation_timestamp, bb = b.creation_timestamp;
+        _lom = _lom.sort((a, b) => {
+            let aa = a.creation_timestamp, bb = b.creation_timestamp;
             //  console.log(aa);
             if (aa !== bb) {
                 if (aa > bb) {
@@ -81,7 +85,6 @@ function updateOriginalData(_id, _status, file) {
     });
 }
 exports.updateOriginalData = updateOriginalData;
-function updateVideoData(req) {
-}
+function updateVideoData(req) { }
 exports.updateVideoData = updateVideoData;
 //# sourceMappingURL=mediautils.js.map

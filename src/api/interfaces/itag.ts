@@ -1,6 +1,6 @@
-import { dynamoose } from '../config/database'
+import { Document } from "mongoose";
 
-export interface ITag extends dynamoose.ModelConstructor<any, any, any> {
+export interface ITag extends Document {
 	name: string
 	visible: boolean
 }

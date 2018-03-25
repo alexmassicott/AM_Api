@@ -4,20 +4,17 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 function mapOrder(array, order, key) {
-    array.sort(function (a, b) {
-        var A = a[key], B = b[key];
+    array.sort((a, b) => {
+        let A = a[key], B = b[key];
         if (order.indexOf(A) > order.indexOf(B)) {
             return 1;
         }
-        else {
-            return -1;
-        }
+        return -1;
     });
     return array;
 }
 exports.mapOrder = mapOrder;
-;
-// 
+//
 // /**
 //  * Example:
 //  */

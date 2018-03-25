@@ -1,6 +1,6 @@
-import { dynamoose } from '../config/database'
+import { mongoose } from '../config/database'
+import { Document, Schema, Model, model} from "mongoose";
 import { IPost } from '../interfaces/ipost'
-const Schema = dynamoose.Schema
 
 const cropSchema = {
   crop: {
@@ -52,12 +52,9 @@ const media = {
 
 const PostSchema = new Schema(
   {
-    id: { type: String, required: true, hashKey: true },
-    type: {
-      type: String,
-      required: true,
-      index: { global: true, rangeKey: 'creation_timestamp', name: 'type-creation_timestamp-index' }
-    },
+    _id: Schema.Types.ObjectId,
+    id: String,
+    type: String,
     creation_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) },
     edit_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) },
     client: { type: String },
@@ -67,20 +64,9 @@ const PostSchema = new Schema(
     summary: { type: String, default: '&nbsp;' },
     publication_status: { type: String, default: 'draft_in_progress' },
     featured: { type: Boolean, default: false },
-    list_of_media: {
-      type: 'list',
-      list: [media]
-    },
-    list_of_tags: {
-      type: 'list',
-      list: [tagSchema]
-    }
-  },
-  {
-    useNativeBooleans: true,
-    useDocumentTypes: true,
-    forceDefault: true
+    list_of_media: [{type: Schema.Types.ObjectId, ref: 'Media'}],
+    list_of_tags: [tagSchema]
   }
 )
 
-export const Posts = dynamoose.model('Posts', PostSchema) as IPost
+export const Posts:Model<IPost> = mongoose.model<IPost>('Posts', PostSchema, "Posts")

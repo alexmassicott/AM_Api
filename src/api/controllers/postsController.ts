@@ -9,9 +9,9 @@ const uuid = require('uuid4')
 function get_a_post (req, res, next): void {
   console.log(req.query.id)
   const id = req.query.id
-
-  Posts.get({ id })
-    .then((items) => {
+  Posts.findById( id )
+  .populate('list_of_media')
+      .then((items)=>{
       const response = {
         status: 'success',
         data: {

@@ -1,8 +1,7 @@
-'use strict';
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const database_1 = require("../config/database");
-const Schema = database_1.dynamoose.Schema;
-exports.tagSchema = new Schema({
+const mongoose_1 = require("mongoose");
+exports.tagSchema = new mongoose_1.Schema({
     name: {
         type: String,
         required: true,
@@ -13,5 +12,5 @@ exports.tagSchema = new Schema({
 }, {
     forceDefault: true
 });
-exports.Tags = database_1.dynamoose.model('Tags', exports.tagSchema);
+exports.Tags = mongoose_1.model('Tags', exports.tagSchema);
 //# sourceMappingURL=Tags.js.map

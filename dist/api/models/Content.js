@@ -1,8 +1,7 @@
 'use strict';
 Object.defineProperty(exports, "__esModule", { value: true });
-const database_1 = require("../config/database");
-const Schema = database_1.dynamoose.Schema;
-exports.contentSchema = new Schema({
+const mongoose_1 = require("mongoose");
+exports.contentSchema = new mongoose_1.Schema({
     feed: {
         type: String,
         required: true,
@@ -16,5 +15,5 @@ exports.contentSchema = new Schema({
 }, {
     forceDefault: true
 });
-exports.Content = database_1.dynamoose.model('content', exports.contentSchema);
+exports.Content = mongoose_1.model('content', exports.contentSchema);
 //# sourceMappingURL=Content.js.map

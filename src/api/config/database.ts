@@ -1,21 +1,7 @@
-import * as dynamoose from "dynamoose"
-import * as https from 'https'
+import * as mongoose from "mongoose";
 
-dynamoose.AWS.config.update({
-  accessKeyId: process.env.accessKeyId,
-  secretAccessKey: process.env.secretAccessKey,
-  region: process.env.region,
-  httpOptions: {
-    agent: new https.Agent({
-      rejectUnauthorized: true,
-      keepAlive: true
-    })
-  }
-})
+(mongoose as any).Promise = global.Promise;
 
-dynamoose.setDefaults({
-  create: false,
-  waitForActive: false
-})
+mongoose.connect('mongodb://localhost/mydb');
 
-export { dynamoose }
+export { mongoose };

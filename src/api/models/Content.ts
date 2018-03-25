@@ -1,7 +1,6 @@
 'use strict';
-import {dynamoose} from '../config/database'
-import {IContent} from '../interfaces/icontent'
-const Schema = dynamoose.Schema
+import { Document, Schema, Model, model} from "mongoose";
+import { IContent } from '../interfaces/icontent'
 
 export const contentSchema = new Schema(
   {
@@ -21,4 +20,4 @@ export const contentSchema = new Schema(
   }
 )
 
-export const Content = dynamoose.model('content', contentSchema) as IContent
+export const Content: Model<IContent> = model<IContent>('content', contentSchema)

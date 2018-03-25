@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Posts_1 = require("../models/Posts");
 const Content_1 = require("../models/Content");
 const mapOrder_1 = require("../utils/mapOrder");
-//////////////
 function getfeeds(req, res, next) {
     let count = 0;
     const promises = req.query.feed.reduce((acc, type) => {

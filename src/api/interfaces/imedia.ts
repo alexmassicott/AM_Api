@@ -1,6 +1,6 @@
-import { dynamoose } from '../config/database'
+import { Document } from "mongoose";
 
-export interface IMedia extends dynamoose.ModelConstructor<any, any, any> {
+export interface IMedia extends Document {
 	id: string
 	post_id: boolean
 	creation_timestamp: boolean

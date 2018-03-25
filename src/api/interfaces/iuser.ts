@@ -1,6 +1,6 @@
-import { dynamoose } from '../config/database'
+import { Document } from "mongoose";
 
-export interface IUser extends dynamoose.ModelConstructor<any, any, any> {
+export interface IUser extends Document {
 	username: string
 	password: string
 	role: string

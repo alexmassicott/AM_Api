@@ -15,9 +15,9 @@ const feedsRoutes_1 = require("./api/routes/feedsRoutes");
 const searchRoutes_1 = require("./api/routes/searchRoutes");
 const apiutils_1 = require("./api/utils/apiutils");
 require('dotenv').config();
-let ExtractJwt = passportJWT.ExtractJwt;
-let JwtStrategy = passportJWT.Strategy;
-let port = process.env.PORT || 3000;
+const ExtractJwt = passportJWT.ExtractJwt;
+const JwtStrategy = passportJWT.Strategy;
+const port = process.env.PORT || 3000;
 class App {
     constructor() {
         this.jwtOptions = {};
@@ -28,11 +28,10 @@ class App {
     init() {
         this.jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
         this.jwtOptions.secretOrKey = process.env.SECRET;
-        var strategy = new JwtStrategy(this.jwtOptions, function (jwt_payload, next) {
+        const strategy = new JwtStrategy(this.jwtOptions, ((jwt_payload, next) => {
             // usually this would be a database call:
             console.log(jwt_payload);
-            User_1.User.get({ username: jwt_payload.user })
-                .then(user => {
+            User_1.User.findOne({ username: jwt_payload.user }).then((user) => {
                 if (user) {
                     next(null, _.pick(user, ['username', 'role']));
                 }
@@ -40,7 +39,7 @@ class App {
                     next(null, false);
                 }
             });
-        });
+        }));
         passport.use(strategy);
         this.express.use(passport.initialize());
     }
@@ -54,8 +53,8 @@ class App {
         searchRoutes_1.default(this.express);
         mediaRoutes_1.default(this.express);
         tagsRoutes_1.default(this.express);
-        this.express.use(function (req, res) {
-            res.status(404).send({ url: req.originalUrl + ' not found' });
+        this.express.use((req, res) => {
+            res.status(404).send({ url: `${req.originalUrl} not found` });
         });
         this.express.use(apiutils_1.clientErrorHandler);
         this.express.use(apiutils_1.errorHandler);

@@ -1,6 +1,6 @@
-import { dynamoose } from '../config/database'
+import { Document } from "mongoose";
 
-export interface IContent extends dynamoose.ModelConstructor<any, any, any> {
+export interface IContent extends Document {
 	feed: string
 	posts: Array<string>
 	edit_timestamp: number

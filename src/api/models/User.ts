@@ -1,7 +1,6 @@
 
-import { dynamoose } from '../config/database'
+import { Document, Schema, Model, model} from "mongoose";
 import { IUser } from '../interfaces/iuser'
-const Schema = dynamoose.Schema
 
 const schema = new Schema({
   username: { type: String, hashKey: true, required: true },
@@ -11,4 +10,4 @@ const schema = new Schema({
   edit_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) }
 })
 
-export const User = dynamoose.model('users', schema) as IUser
+export const User:Model<IUser> = model<IUser>('users', schema)

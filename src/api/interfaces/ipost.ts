@@ -1,7 +1,7 @@
-import { dynamoose } from '../config/database'
+import { Document } from "mongoose";
 import { IPostMedia } from './ipostMedia'
 
-export interface IPost extends dynamoose.ModelConstructor<any, any, any> {
+export interface IPost extends Document{
 	id: string
 	type: string
 	creation_timestamp: number

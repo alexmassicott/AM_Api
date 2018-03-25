@@ -34,7 +34,7 @@ class App {
 	  const strategy = new JwtStrategy(this.jwtOptions, ((jwt_payload, next) => {
 	    // usually this would be a database call:
 	    console.log(jwt_payload)
-	    User.get({ username: jwt_payload.user }).then((user) => {
+	    User.findOne({ username: jwt_payload.user }).then((user) => {
 	      if (user) {
 	        next(null, _.pick(user, ['username', 'role']))
 	      } else {

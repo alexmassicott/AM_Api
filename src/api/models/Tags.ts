@@ -1,7 +1,6 @@
 
-import { dynamoose } from '../config/database'
+import { Document, Schema, Model, model} from "mongoose";
 import { ITag } from '../interfaces/itag'
-const Schema = dynamoose.Schema
 
 export const tagSchema = new Schema(
   {
@@ -18,4 +17,4 @@ export const tagSchema = new Schema(
   }
 )
 
-export const Tags = dynamoose.model('Tags', tagSchema) as ITag
+export const Tags: Model<ITag> = model<ITag>('Tags', tagSchema)

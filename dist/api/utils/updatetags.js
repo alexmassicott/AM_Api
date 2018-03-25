@@ -1,65 +1,65 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var async = require('async');
-var _ = require('lodash');
+const async = require('async');
+const _ = require('lodash');
 const Tags_1 = require("../models/Tags");
 const tagParams = (_tag, _pid, docClient) => {
-    let params = {};
+    const params = {};
     params.ExpressionAttributeNames = {
-        "#PostIDs": "posts",
-        "#name": "name"
+        '#PostIDs': 'posts',
+        '#name': 'name'
     };
     params.ExpressionAttributeValues = {
-        ":pid": docClient.createSet([_pid]),
-        ":tagname": _tag
+        ':pid': docClient.createSet([_pid]),
+        ':tagname': _tag
     };
-    params.UpdateExpression = "ADD #PostIDs :pid";
+    params.UpdateExpression = 'ADD #PostIDs :pid';
     params.Key = {
-        "name": _tag
+        name: _tag
     };
-    params.ConditionExpression = "#name = :tagname";
-    params.TableName = "Tags";
+    params.ConditionExpression = '#name = :tagname';
+    params.TableName = 'Tags';
     return params;
 };
 const remtagParams = (_tag, _pid, docClient) => {
-    console.log("remove tags");
-    let params = {};
+    console.log('remove tags');
+    const params = {};
     params.ExpressionAttributeNames = {
-        "#PostIDs": "posts"
+        '#PostIDs': 'posts'
     };
     params.ExpressionAttributeValues = {
-        ":pid": docClient.createSet([_pid])
+        ':pid': docClient.createSet([_pid])
     };
-    params.UpdateExpression = "DELETE #PostIDs :pid";
+    params.UpdateExpression = 'DELETE #PostIDs :pid';
     params.Key = {
-        "name": _tag
+        name: _tag
     };
-    params.TableName = "Tags";
-    params.ReturnValues = "UPDATED_NEW";
+    params.TableName = 'Tags';
+    params.ReturnValues = 'UPDATED_NEW';
     return params;
 };
 const updatePostTags = (docClient, pid, lot) => {
-    let data = {};
+    const data = {};
     data.Key = {
-        "id": pid
+        id: pid
     };
-    data.TableName = "Posts";
+    data.TableName = 'Posts';
     data.ExpressionAttributeNames = new Object();
     data.ExpressionAttributeValues = new Object();
-    data.ExpressionAttributeNames["#lom"] = "list_of_tags";
-    data.UpdateExpression = "SET #lom=:lom";
-    data.ExpressionAttributeValues[":lom"] = lot;
-    data.ReturnValues = "UPDATED_OLD";
+    data.ExpressionAttributeNames['#lom'] = 'list_of_tags';
+    data.UpdateExpression = 'SET #lom=:lom';
+    data.ExpressionAttributeValues[':lom'] = lot;
+    data.ReturnValues = 'UPDATED_OLD';
     return data;
 };
 module.exports = (pid, list_of_tags, docClient, cb) => {
-    console.log("in it");
+    console.log('in it');
     let tags = list_of_tags;
-    async.forEachOf(list_of_tags, function (value, key, next) {
+    async.forEachOf(list_of_tags, (value, key, next) => {
         if (value.name) {
-            console.log("looking");
-            let params = tagParams(value.name, pid, docClient);
-            Tags_1.Tags.update(params, function (err, data) {
+            console.log('looking');
+            const params = tagParams(value.name, pid, docClient);
+            Tags_1.Tags.update(params, (err, data) => {
                 if (err) {
                     console.log(err);
                     tags = _.remove(list_of_tags, {
@@ -97,7 +97,7 @@ Array.prototype.equals = function (array) {
     // compare lengths - can save a lot of time
     if (this.length != array.length)
         return false;
-    for (var i = 0, l = this.length; i < l; i++) {
+    for (let i = 0, l = this.length; i < l; i++) {
         // Check if we have nested arrays
         if (this[i] instanceof Array && array[i] instanceof Array) {
             // recurse into the nested arrays
@@ -112,13 +112,13 @@ Array.prototype.equals = function (array) {
     return true;
 };
 // Hide method from for-in loops
-Object.defineProperty(Array.prototype, "equals", {
+Object.defineProperty(Array.prototype, 'equals', {
     enumerable: false
 });
 Array.prototype.diff = function (array) {
-    let diff = [];
-    let len = this.length >= array.length ? this.length : array.length;
-    for (var i = 0, l = len; i < l; i++) {
+    const diff = [];
+    const len = this.length >= array.length ? this.length : array.length;
+    for (let i = 0, l = len; i < l; i++) {
         if (this[i] && array[i]) {
             if (this[i].name != array[i].name) {
                 // Warning - two different object instances will never be equal: {x:20} != {x:20}
