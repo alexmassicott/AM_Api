@@ -38,14 +38,13 @@ function get_a_type(req, res, next) {
         .sort({ creation_timestamp: -1 })
         .skip(req.query.offset)
         .limit(req.query.limit)
-        .populate('list_of_media')
-        .exec();
+        .populate('list_of_media');
     query
         .then((items) => {
         const response = {
             status: 'success',
             data: {
-                more_available: false,
+                more_available: !!query.cursor().next()._id,
                 number_of_posts_returned: items.length,
                 posts: items
             }

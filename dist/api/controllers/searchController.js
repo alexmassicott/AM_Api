@@ -8,9 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const _ = require("lodash");
 const Posts_1 = require("../models/Posts");
-const Tags_1 = require("../models/Tags");
 // ////////////
 function getsearch(req) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -19,11 +17,9 @@ function getsearch(req) {
         let result;
         let result2;
         let posts;
-        result = yield Tags_1.Tags.find({ name: { $in: query } });
-        posts = _.intersection(...result.map((j) => j.posts));
-        result2 = yield Posts_1.Posts.find({ id: { $in: posts } });
+        result = yield Posts_1.Posts.find({ list_of_tags: { $elemMatch: { name: { $in: query } } } });
         // done();
-        return result2;
+        return result;
     });
 }
 function get_search(req, res) {

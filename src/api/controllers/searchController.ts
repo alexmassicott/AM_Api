@@ -11,12 +11,10 @@ async function getsearch (req: Request): Promise<any> {
   let result2: IPost[]
   let posts: string[]
 
-  result = await Tags.find({ name: { $in: query } })
-  posts = _.intersection(...result.map((j) => j.posts))
-  result2 = await Posts.find({ id: { $in: posts } })
+  result = await Posts.find({ list_of_tags: { $elemMatch: { name: { $in: query } } } })
 
   // done();
-  return result2
+  return result
 }
 
 export async function get_search (req: Request, res: Response): Promise<any> {
