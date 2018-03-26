@@ -17,7 +17,7 @@ function getsearch(req) {
         let result;
         let result2;
         let posts;
-        result = yield Posts_1.Posts.find({ list_of_tags: { $elemMatch: { name: { $in: query } } } });
+        result = yield Posts_1.Posts.find({ list_of_tags: { $elemMatch: { name: { $in: query } } } }).populate('list_of_media');
         // done();
         return result;
     });

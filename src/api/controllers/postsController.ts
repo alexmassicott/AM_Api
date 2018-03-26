@@ -26,13 +26,15 @@ function get_a_post (req, res, next): void {
     })
 }
 
-function get_a_type (req, res, next): void {
+async function get_a_type (req, res, next): void {
   const type = req.query.type
+  const count = await Posts.find({ type }).count()
+  const offset = req.query.offset ? parseInt(req.query.offset) : 0
 
   const query: any = Posts.find({ type })
     .sort({ creation_timestamp: -1 })
-    .skip(req.query.offset)
-    .limit(req.query.limit)
+    .skip(offset)
+    .limit(parseInt(req.query.limit))
     .populate('list_of_media')
 
   query
@@ -40,7 +42,8 @@ function get_a_type (req, res, next): void {
       const response = {
         status: 'success',
         data: {
-          more_available: !!query.cursor().next()._id,
+          more_available: offset + parseInt(req.query.limit) < count,
+          number_of_posts_total: count,
           number_of_posts_returned: items.length,
           posts: items
         }

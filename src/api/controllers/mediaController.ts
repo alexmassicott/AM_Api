@@ -235,7 +235,7 @@ function get_medialist (req, res, next) {
       res.json({
         status: 'success',
         data: {
-          media: data
+          media: data.list_of_media
         }
       })
     })

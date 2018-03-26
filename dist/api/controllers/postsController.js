@@ -32,26 +32,31 @@ function get_a_post(req, res, next) {
     });
 }
 function get_a_type(req, res, next) {
-    const type = req.query.type;
-    const query = Posts_1.Posts.find({ type })
-        .sort({ creation_timestamp: -1 })
-        .skip(req.query.offset)
-        .limit(req.query.limit)
-        .populate('list_of_media');
-    query
-        .then((items) => {
-        const response = {
-            status: 'success',
-            data: {
-                more_available: !!query.cursor().next()._id,
-                number_of_posts_returned: items.length,
-                posts: items
-            }
-        };
-        res.json(response);
-    })
-        .catch((err) => {
-        next(err);
+    return __awaiter(this, void 0, void 0, function* () {
+        const type = req.query.type;
+        const count = yield Posts_1.Posts.find({ type }).count();
+        const offset = req.query.offset ? parseInt(req.query.offset) : 0;
+        const query = Posts_1.Posts.find({ type })
+            .sort({ creation_timestamp: -1 })
+            .skip(offset)
+            .limit(parseInt(req.query.limit))
+            .populate('list_of_media');
+        query
+            .then((items) => {
+            const response = {
+                status: 'success',
+                data: {
+                    more_available: offset + parseInt(req.query.limit) < count,
+                    number_of_posts_total: count,
+                    number_of_posts_returned: items.length,
+                    posts: items
+                }
+            };
+            res.json(response);
+        })
+            .catch((err) => {
+            next(err);
+        });
     });
 }
 function getUpdatepostParams(body, post) {
