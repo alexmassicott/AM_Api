@@ -1,5 +1,5 @@
 import { mongoose } from '../config/database'
-import { Document, Schema, Model, model} from "mongoose";
+import { Document, Schema, Model, model } from 'mongoose'
 import { IPostMedia } from '../interfaces/ipostMedia'
 
 const cropSchema = {
@@ -14,15 +14,15 @@ const cropSchema = {
   url: { type: String }
 }
 
-export const mediaSchema = new Schema({
-  id: {type: String, required: true},
+const mediaSchema = new Schema({
+  id: { type: String, required: true },
   post_id: String,
   original_data: {
     originalname: String,
     mimetype: String,
     url: String,
     size: Number,
-    cover_image: cropSchema,
+    cover_image: cropSchema
   },
   creation_timestamp: {
     type: Number,
@@ -46,4 +46,12 @@ export const mediaSchema = new Schema({
   }
 })
 
-export const Media:Model<IPostMedia> = mongoose.model<IPostMedia>('Media', mediaSchema, 'Media')
+mediaSchema.set('toJSON', {
+  transform (doc, ret, options) {
+    ret.id = ret._id
+    delete ret._id
+    delete ret.__v
+  }
+})
+
+export const Media: Model<IPostMedia> = mongoose.model<IPostMedia>('Media', mediaSchema, 'Media')

@@ -11,7 +11,7 @@ async function getsearch (req: Request): Promise<any> {
   let result2: IPost[]
   let posts: string[]
 
-  result = await Posts.find({ list_of_tags: { $elemMatch: { name: { $in: query } } } })
+  result = await Posts.find({ list_of_tags: { $elemMatch: { name: { $in: query } } } }).populate('list_of_media')
 
   // done();
   return result

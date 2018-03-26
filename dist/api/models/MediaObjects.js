@@ -13,7 +13,7 @@ const cropSchema = {
     number_of_changes: { type: Number, default: 0 },
     url: { type: String }
 };
-exports.mediaSchema = new mongoose_1.Schema({
+const mediaSchema = new mongoose_1.Schema({
     id: { type: String, required: true },
     post_id: String,
     original_data: {
@@ -21,7 +21,7 @@ exports.mediaSchema = new mongoose_1.Schema({
         mimetype: String,
         url: String,
         size: Number,
-        cover_image: cropSchema,
+        cover_image: cropSchema
     },
     creation_timestamp: {
         type: Number,
@@ -44,5 +44,12 @@ exports.mediaSchema = new mongoose_1.Schema({
         '16x9': cropSchema
     }
 });
-exports.Media = database_1.mongoose.model('Media', exports.mediaSchema, 'Media');
+mediaSchema.set('toJSON', {
+    transform(doc, ret, options) {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+    }
+});
+exports.Media = database_1.mongoose.model('Media', mediaSchema, 'Media');
 //# sourceMappingURL=MediaObjects.js.map

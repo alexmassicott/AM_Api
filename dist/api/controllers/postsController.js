@@ -14,7 +14,6 @@ const errorconstants_1 = require("../constants/errorconstants");
 const setTags = require('../utils/updatetags');
 const uuid = require('uuid4');
 function get_a_post(req, res, next) {
-    console.log(req.query.id);
     const id = req.query.id;
     Posts_1.Posts.findById(id)
         .populate('list_of_media')

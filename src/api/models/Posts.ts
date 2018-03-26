@@ -20,7 +20,7 @@ const tagSchema = {
 }
 
 const PostSchema = new Schema({
-  _id: Schema.Types.ObjectId,
+  id: String,
   type: String,
   creation_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) },
   edit_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) },
@@ -33,6 +33,14 @@ const PostSchema = new Schema({
   featured: { type: Boolean, default: false },
   list_of_media: [{ type: Schema.Types.ObjectId, ref: 'Media' }],
   list_of_tags: [tagSchema]
+})
+
+PostSchema.set('toJSON', {
+  transform (doc, ret, options) {
+    ret.id = ret._id
+    delete ret._id
+    delete ret.__v
+  }
 })
 
 export const Posts: Model<IPost> = mongoose.model<IPost>('Posts', PostSchema, 'Posts')

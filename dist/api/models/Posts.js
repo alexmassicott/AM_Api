@@ -18,7 +18,7 @@ const tagSchema = {
     visible: Boolean
 };
 const PostSchema = new mongoose_1.Schema({
-    _id: mongoose_1.Schema.Types.ObjectId,
+    id: String,
     type: String,
     creation_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) },
     edit_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) },
@@ -31,6 +31,13 @@ const PostSchema = new mongoose_1.Schema({
     featured: { type: Boolean, default: false },
     list_of_media: [{ type: mongoose_1.Schema.Types.ObjectId, ref: 'Media' }],
     list_of_tags: [tagSchema]
+});
+PostSchema.set('toJSON', {
+    transform(doc, ret, options) {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v;
+    }
 });
 exports.Posts = database_1.mongoose.model('Posts', PostSchema, 'Posts');
 //# sourceMappingURL=Posts.js.map
