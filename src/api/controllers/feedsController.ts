@@ -1,6 +1,5 @@
 import { Request, Response } from 'express'
 import { Posts } from '../models/Posts'
-import { Content } from '../models/Content'
 import { mapOrder } from '../utils/mapOrder'
 import { IPost } from '../interfaces/ipost'
 
