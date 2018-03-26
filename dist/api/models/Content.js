@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = require("mongoose");
 exports.contentSchema = new mongoose_1.Schema({
@@ -12,8 +12,6 @@ exports.contentSchema = new mongoose_1.Schema({
         type: Number,
         default: Math.floor(Date.now() / 1000)
     }
-}, {
-    forceDefault: true
 });
-exports.Content = mongoose_1.model('content', exports.contentSchema);
+exports.Content = mongoose_1.model("content", exports.contentSchema);
 //# sourceMappingURL=Content.js.map

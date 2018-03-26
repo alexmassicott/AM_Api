@@ -1,4 +1,4 @@
-import {s3} from '../config/s3'
+import { s3 } from '../config/s3'
 import * as async from 'async'
 import * as _ from 'lodash'
 import * as tinify from 'tinify'
@@ -8,10 +8,10 @@ import { Media } from '../models/MediaObjects'
 import { updateOriginalData, getFullMedia, updateCropData, getPostLom, updateVideoData } from '../utils/mediautils'
 import { Response, Request } from 'express'
 import { PERMISSION_ERROR } from '../constants/errorconstants'
-let gm = require('gm').subClass({
+const gm = require('gm').subClass({
   imageMagick: true
 })
-let uuid=require('uuid4')
+const uuid = require('uuid4')
 
 tinify.key = process.env.TINIFY_KEY
 const bucketName = 'alexmassbucket'
@@ -123,16 +123,16 @@ function updatemedia (req: Request, res: Response, next: any): void {
   const url = `${'images/' + `${imageName}` + '.'}${filetype}`
   const metadata = _.pick(req.files.file_data[0], ['originalname', 'size', 'mimetype', 'encoding'])
   metadata.url = url
-  const s3params = {
-    Bucket: bucketName,
-    Key: url,
-    Body: resultData,
-    ContentType: `image/${filetype}`
-  }
 
   if (req.body.type == 'image') {
     tinify.fromBuffer(req.files.file_data[0].buffer).toBuffer((err, resultData) => {
       if (err) next(err)
+      const s3params = {
+        Bucket: bucketName,
+        Key: url,
+        Body: resultData,
+        ContentType: `image/${filetype}`
+      }
       s3.putObject(s3params, (err, data) => {
         if (err) next(err)
         try {
@@ -144,6 +144,12 @@ function updatemedia (req: Request, res: Response, next: any): void {
       })
     })
   } else if (req.body.type == 'video') {
+    const s3params = {
+      Bucket: bucketName,
+      Key: url,
+      Body: req.files.file_data[0].buffer,
+      ContentType: `image/${filetype}`
+    }
     s3.putObject(s3params, (err, data) => {
       if (err) next(err)
       try {
@@ -160,9 +166,8 @@ async function cropmedia (req: Request, res: Response, next: any): Promise<void>
   imageName = req.body.id
   try {
     const data = await getFullMedia(req.body.id)
-    const mo: IPostMedia[] = data.list_of_media.filter((a) => a.id == req.body.id)
-    if (mo[0].original_data) {
-      srcKey = mo[0].original_data.url
+    if (data.original_data) {
+      srcKey = data.original_data.url
       typeMatch = srcKey.match(/\.([^.]*)$/)
       filetype = typeMatch[1].toLowerCase()
       cropImage(req, res, next)
@@ -210,9 +215,7 @@ async function createmedia (req: Request, res: Response, next: any): Promise<any
 async function get_a_media (req, res, next): Promise<void> {
   const id = req.query.id
   try {
-    const data = await getFullMedia(id)
-    const list_of_media = data.list_of_media
-    const mo: IPostMedia = list_of_media.filter((a) => a.id == id)[0]
+    const mo = await getFullMedia(id)
     res.json({
       status: 'success',
       data: {
@@ -229,27 +232,10 @@ function get_medialist (req, res, next) {
 
   getPostLom(post_id)
     .then((data) => {
-      let sortedArray = data.list_of_media
-      if (sortedArray.length > 1) {
-        sortedArray = data.list_of_media.sort((a, b) => {
-          let aa = a.creation_timestamp,
-            bb = b.creation_timestamp
-          //  console.log(aa);
-          if (aa !== bb) {
-            if (aa > bb) {
-              return 1
-            }
-            if (aa < bb) {
-              return -1
-            }
-          }
-          return aa - bb
-        })
-      }
       res.json({
         status: 'success',
         data: {
-          media: sortedArray
+          media: data
         }
       })
     })
@@ -260,36 +246,11 @@ function get_medialist (req, res, next) {
 
 async function deletemedia (req: Request, res: Response, next: any): Promise<any> {
   const post_id = req.body.post_id
-  let updatedList
   const media_id = req.body.id
   try {
-    const data = await getPostLom(post_id)
-    let updatedList = _.remove(data.list_of_media, {
-      id: media_id
-    })
-
-    if (updatedList.length > 1) {
-      updatedList = updatedList.sort((a, b) => {
-        let aa = a.creation_timestamp,
-          bb = b.creation_timestamp
-        //  console.log(aa);
-        if (aa !== bb) {
-          if (aa > bb) {
-            return 1
-          }
-          if (aa < bb) {
-            return -1
-          }
-        }
-        return aa - bb
-      })
-    }
-
-    Posts.update({ list_of_media: updatedList })
-      .then(() => Promise.resolve(Media.delete({ id: media_id })))
-      .then(() => {
-        res.json({ status: 'success' })
-      })
+    const data = await Posts.update({ id: post_id }, { $pullAll: { list_of_media: [media_id] } })
+    Media.remove({ _id: media_id })
+    res.json({ status: 'success' })
   } catch (err) {
     next(err)
   }

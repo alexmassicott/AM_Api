@@ -1,5 +1,3 @@
-
-import { dynamoose } from '../config/database'
 import { User } from '../models/User'
 import { Request, Response } from 'express'
 import * as jwt from 'jsonwebtoken'
@@ -13,7 +11,9 @@ jwtOptions.secretOrKey = process.env.SECRET
 export function list_all_users (req: Request, res: Response): void {}
 
 export function create_user (req: Request, res: Response): void {
-  User.create({ username: req.body.username, password: req.body.password })
+  const user = new User({ username: req.body.username, password: req.body.password })
+  user
+    .save()
     .then(() => {
       res.json({ status: 'success' })
     })
@@ -25,7 +25,7 @@ export function create_user (req: Request, res: Response): void {
 export function authenticate (req: Request, res: Response, next: any): void {
   const username = req.body.username
   const password = req.body.password
-  User.get({ username }).then((user) => {
+  User.findOne({ username }).then((user) => {
     if (!user) {
       next(new Error("We can't find user in our system"))
     }

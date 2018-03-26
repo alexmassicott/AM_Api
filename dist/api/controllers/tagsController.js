@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Tags_1 = require("../models/Tags");
 const errorconstants_1 = require("../constants/errorconstants");
 function deletetag(req, res, next) {
-    Tags_1.Tags.delete({ name: req.body.name })
+    Tags_1.Tags.remove({ name: req.body.name })
         .then(() => {
         res.json({ status: 'success', name: req.body.name });
     })
@@ -13,7 +13,9 @@ function deletetag(req, res, next) {
 }
 function createtag(req, res, next) {
     const name = req.body.name;
-    Tags_1.Tags.create({ name })
+    const tag = new Tags_1.Tags({ name });
+    tag
+        .save()
         .then(() => {
         res.json({ status: 'success', name: req.body.name });
     })
@@ -22,8 +24,8 @@ function createtag(req, res, next) {
     });
 }
 function gettags(req, res, next) {
-    Tags_1.Tags.scan()
-        .attributes(['name'])
+    Tags_1.Tags.find()
+        .select('name')
         .exec()
         .then((items) => {
         res.json({ status: 'success', data: { tags: items } });

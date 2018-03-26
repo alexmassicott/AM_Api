@@ -16,10 +16,10 @@ const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
 const mediautils_1 = require("../utils/mediautils");
 const errorconstants_1 = require("../constants/errorconstants");
-let gm = require('gm').subClass({
+const gm = require('gm').subClass({
     imageMagick: true
 });
-let uuid = require('uuid4');
+const uuid = require('uuid4');
 tinify.key = process.env.TINIFY_KEY;
 const bucketName = 'alexmassbucket';
 let pathParams, image, imageName, srcKey, typeMatch, filetype;
@@ -112,16 +112,16 @@ function updatemedia(req, res, next) {
     const url = `${'images/' + `${imageName}` + '.'}${filetype}`;
     const metadata = _.pick(req.files.file_data[0], ['originalname', 'size', 'mimetype', 'encoding']);
     metadata.url = url;
-    const s3params = {
-        Bucket: bucketName,
-        Key: url,
-        Body: resultData,
-        ContentType: `image/${filetype}`
-    };
     if (req.body.type == 'image') {
         tinify.fromBuffer(req.files.file_data[0].buffer).toBuffer((err, resultData) => {
             if (err)
                 next(err);
+            const s3params = {
+                Bucket: bucketName,
+                Key: url,
+                Body: resultData,
+                ContentType: `image/${filetype}`
+            };
             s3_1.s3.putObject(s3params, (err, data) => {
                 if (err)
                     next(err);
@@ -136,6 +136,12 @@ function updatemedia(req, res, next) {
         });
     }
     else if (req.body.type == 'video') {
+        const s3params = {
+            Bucket: bucketName,
+            Key: url,
+            Body: req.files.file_data[0].buffer,
+            ContentType: `image/${filetype}`
+        };
         s3_1.s3.putObject(s3params, (err, data) => {
             if (err)
                 next(err);
@@ -154,9 +160,8 @@ function cropmedia(req, res, next) {
         imageName = req.body.id;
         try {
             const data = yield mediautils_1.getFullMedia(req.body.id);
-            const mo = data.list_of_media.filter((a) => a.id == req.body.id);
-            if (mo[0].original_data) {
-                srcKey = mo[0].original_data.url;
+            if (data.original_data) {
+                srcKey = data.original_data.url;
                 typeMatch = srcKey.match(/\.([^.]*)$/);
                 filetype = typeMatch[1].toLowerCase();
                 cropImage(req, res, next);
@@ -209,9 +214,7 @@ function get_a_media(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const id = req.query.id;
         try {
-            const data = yield mediautils_1.getFullMedia(id);
-            const list_of_media = data.list_of_media;
-            const mo = list_of_media.filter((a) => a.id == id)[0];
+            const mo = yield mediautils_1.getFullMedia(id);
             res.json({
                 status: 'success',
                 data: {
@@ -229,26 +232,10 @@ function get_medialist(req, res, next) {
     const post_id = req.query.post_id;
     mediautils_1.getPostLom(post_id)
         .then((data) => {
-        let sortedArray = data.list_of_media;
-        if (sortedArray.length > 1) {
-            sortedArray = data.list_of_media.sort((a, b) => {
-                let aa = a.creation_timestamp, bb = b.creation_timestamp;
-                //  console.log(aa);
-                if (aa !== bb) {
-                    if (aa > bb) {
-                        return 1;
-                    }
-                    if (aa < bb) {
-                        return -1;
-                    }
-                }
-                return aa - bb;
-            });
-        }
         res.json({
             status: 'success',
             data: {
-                media: sortedArray
+                media: data
             }
         });
     })
@@ -259,33 +246,11 @@ function get_medialist(req, res, next) {
 function deletemedia(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const post_id = req.body.post_id;
-        let updatedList;
         const media_id = req.body.id;
         try {
-            const data = yield mediautils_1.getPostLom(post_id);
-            let updatedList = _.remove(data.list_of_media, {
-                id: media_id
-            });
-            if (updatedList.length > 1) {
-                updatedList = updatedList.sort((a, b) => {
-                    let aa = a.creation_timestamp, bb = b.creation_timestamp;
-                    //  console.log(aa);
-                    if (aa !== bb) {
-                        if (aa > bb) {
-                            return 1;
-                        }
-                        if (aa < bb) {
-                            return -1;
-                        }
-                    }
-                    return aa - bb;
-                });
-            }
-            Posts_1.Posts.update({ list_of_media: updatedList })
-                .then(() => Promise.resolve(MediaObjects_1.Media.delete({ id: media_id })))
-                .then(() => {
-                res.json({ status: 'success' });
-            });
+            const data = yield Posts_1.Posts.update({ id: post_id }, { $pullAll: { list_of_media: [media_id] } });
+            MediaObjects_1.Media.remove({ _id: media_id });
+            res.json({ status: 'success' });
         }
         catch (err) {
             next(err);

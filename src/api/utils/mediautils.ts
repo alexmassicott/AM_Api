@@ -1,81 +1,38 @@
 /* Expressions for AWS
 */
 import { Posts } from '../models/Posts'
-import { IPost } from '../interfaces/ipost'
+import { IPostMedia } from '../interfaces/ipostmedia'
 import { Media } from '../models/MediaObjects'
-export function getPostLom (post_id): Promise<any> {
-  return Posts.get({ id: post_id })
+
+export async function getPostLom (post_id): Promise<any> {
+  const lom = await Posts.findById(post_id)
+    .select('list_of_media')
+    .populate('list_of_media')
+  return lom
 }
 
-export async function getFullMedia (media_id: string): Promise<IPost> {
-  const data = await Media.get({ id: media_id })
-  const post = await getPostLom(data.post_id)
-
-  return post
+export async function getFullMedia (media_id: string): Promise<IPostMedia> {
+  const data = await Media.findById(media_id)
+  return data
 }
 
 export async function updateCropData (_id: string, _size: any, _cd: any): Promise<any> {
-  const data = await getFullMedia(_id)
+  const media = await getFullMedia(_id)
 
-  const _pid = data.id
-  let _lom = data.list_of_media
-  const mo = _lom.filter((a) => a.id == _id)[0]
-  mo.data[_size] = _cd
-  mo.edit_timestamp = Date.now() / 1000
-  mo.number_of_changes += 1
-
-  const index = _lom
-    .map((e) => e.id)
-    .indexOf(_id)
-  _lom[index] = mo
-  _lom = _lom.sort((a, b) => {
-    let aa = a.creation_timestamp,
-      bb = b.creation_timestamp
-    //  console.log(aa);
-    if (aa !== bb) {
-      if (aa > bb) {
-        return 1
-      }
-      if (aa < bb) {
-        return -1
-      }
-    }
-    return aa - bb
-  })
-
-  return Promise.resolve(Posts.update({ id: _pid }, { list_of_media: _lom }))
+  media.data[_size] = _cd
+  media.edit_timestamp = Date.now() / 1000
+  media.number_of_changes += 1
+  media.save()
 }
 
 export async function updateOriginalData (_id: string, _status: string, file: any): Promise<any> {
-  const data = await getFullMedia(_id)
-  const _pid = data.id
-  let _lom = data.list_of_media
-  const mo = _lom.filter((a) => a.id == _id)[0]
-  mo.original_data = file
-  mo.status = _status
-  mo.number_of_changes += 1
-  mo.edit_timestamp = Date.now() / 1000
+  const media = await getFullMedia(_id)
 
-  const index = _lom
-    .map((e) => e.id)
-    .indexOf(_id)
-  _lom[index] = mo
-  _lom = _lom.sort((a, b) => {
-    let aa = a.creation_timestamp,
-      bb = b.creation_timestamp
-    //  console.log(aa);
-    if (aa !== bb) {
-      if (aa > bb) {
-        return 1
-      }
-      if (aa < bb) {
-        return -1
-      }
-    }
-    return aa - bb
-  })
-
-  return Promise.resolve(Posts.update({ id: _pid }, { list_of_media: _lom }))
+  media.original_data = file
+  media.status = _status
+  media.number_of_changes += 1
+  media.edit_timestamp = Date.now() / 1000
+  media.save()
 }
 
 export function updateVideoData (req) {}

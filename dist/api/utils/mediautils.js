@@ -13,75 +13,39 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
 function getPostLom(post_id) {
-    return Posts_1.Posts.get({ id: post_id });
+    return __awaiter(this, void 0, void 0, function* () {
+        const lom = yield Posts_1.Posts.findById(post_id)
+            .select('list_of_media')
+            .populate('list_of_media');
+        return lom;
+    });
 }
 exports.getPostLom = getPostLom;
 function getFullMedia(media_id) {
     return __awaiter(this, void 0, void 0, function* () {
-        const data = yield MediaObjects_1.Media.get({ id: media_id });
-        const post = yield getPostLom(data.post_id);
-        return post;
+        const data = yield MediaObjects_1.Media.findById(media_id);
+        return data;
     });
 }
 exports.getFullMedia = getFullMedia;
 function updateCropData(_id, _size, _cd) {
     return __awaiter(this, void 0, void 0, function* () {
-        const data = yield getFullMedia(_id);
-        const _pid = data.id;
-        let _lom = data.list_of_media;
-        const mo = _lom.filter((a) => a.id == _id)[0];
-        mo.data[_size] = _cd;
-        mo.edit_timestamp = Date.now() / 1000;
-        mo.number_of_changes += 1;
-        const index = _lom
-            .map((e) => e.id)
-            .indexOf(_id);
-        _lom[index] = mo;
-        _lom = _lom.sort((a, b) => {
-            let aa = a.creation_timestamp, bb = b.creation_timestamp;
-            //  console.log(aa);
-            if (aa !== bb) {
-                if (aa > bb) {
-                    return 1;
-                }
-                if (aa < bb) {
-                    return -1;
-                }
-            }
-            return aa - bb;
-        });
-        return Promise.resolve(Posts_1.Posts.update({ id: _pid }, { list_of_media: _lom }));
+        const media = yield getFullMedia(_id);
+        media.data[_size] = _cd;
+        media.edit_timestamp = Date.now() / 1000;
+        media.number_of_changes += 1;
+        media.save();
     });
 }
 exports.updateCropData = updateCropData;
 function updateOriginalData(_id, _status, file) {
     return __awaiter(this, void 0, void 0, function* () {
-        const data = yield getFullMedia(_id);
-        const _pid = data.id;
-        let _lom = data.list_of_media;
-        const mo = _lom.filter((a) => a.id == _id)[0];
-        mo.original_data = file;
-        mo.status = _status;
-        mo.number_of_changes += 1;
-        mo.edit_timestamp = Date.now() / 1000;
-        const index = _lom
-            .map((e) => e.id)
-            .indexOf(_id);
-        _lom[index] = mo;
-        _lom = _lom.sort((a, b) => {
-            let aa = a.creation_timestamp, bb = b.creation_timestamp;
-            //  console.log(aa);
-            if (aa !== bb) {
-                if (aa > bb) {
-                    return 1;
-                }
-                if (aa < bb) {
-                    return -1;
-                }
-            }
-            return aa - bb;
-        });
-        return Promise.resolve(Posts_1.Posts.update({ id: _pid }, { list_of_media: _lom }));
+        const media = yield getFullMedia(_id);
+        media.original_data = file;
+        media.status = _status;
+        media.number_of_changes += 1;
+        media.edit_timestamp = Date.now() / 1000;
+        media.save();
     });
 }
 exports.updateOriginalData = updateOriginalData;

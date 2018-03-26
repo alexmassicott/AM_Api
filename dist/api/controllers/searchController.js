@@ -15,16 +15,15 @@ const Tags_1 = require("../models/Tags");
 function getsearch(req) {
     return __awaiter(this, void 0, void 0, function* () {
         const query = req.query.query.split(',');
-        let queryItems = [];
+        const queryItems = [];
         let result;
         let result2;
         let posts;
-        result = yield Tags_1.Tags.batchGet(query.map((i) => ({ name: i })));
+        result = yield Tags_1.Tags.find({ name: { $in: query } });
         posts = _.intersection(...result.map((j) => j.posts));
-        result2 = yield Posts_1.Posts.batchGet(posts.map((id) => ({ id })));
-        queryItems = queryItems.concat(result2);
+        result2 = yield Posts_1.Posts.find({ id: { $in: posts } });
         // done();
-        return queryItems;
+        return result2;
     });
 }
 function get_search(req, res) {

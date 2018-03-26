@@ -1,10 +1,9 @@
-
 import { Tags } from '../models/Tags'
 import { Response, Request } from 'express'
 import { PERMISSION_ERROR } from '../constants/errorconstants'
 
 function deletetag (req: Request, res: Response, next: any): void {
-  Tags.delete({ name: req.body.name })
+  Tags.remove({ name: req.body.name })
     .then(() => {
       res.json({ status: 'success', name: req.body.name })
     })
@@ -15,7 +14,9 @@ function deletetag (req: Request, res: Response, next: any): void {
 
 function createtag (req: Request, res: Response, next: any): void {
   const name = req.body.name
-  Tags.create({ name })
+  const tag = new Tags({ name })
+  tag
+    .save()
     .then(() => {
       res.json({ status: 'success', name: req.body.name })
     })
@@ -25,8 +26,8 @@ function createtag (req: Request, res: Response, next: any): void {
 }
 
 function gettags (req: Request, res: Response, next: any): void {
-  Tags.scan()
-    .attributes(['name'])
+  Tags.find()
+    .select('name')
     .exec()
     .then((items) => {
       res.json({ status: 'success', data: { tags: items } })

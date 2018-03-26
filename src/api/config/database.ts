@@ -1,7 +1,7 @@
-import * as mongoose from "mongoose";
+import * as mongoose from 'mongoose'
 
-(mongoose as any).Promise = global.Promise;
+  ;(mongoose as any).Promise = global.Promise
 
-mongoose.connect('mongodb://localhost/mydb');
+mongoose.connect('mongodb://localhost/mydb')
 
-export { mongoose };
+export { mongoose }

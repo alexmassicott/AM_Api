@@ -21,7 +21,8 @@ export const mediaSchema = new Schema({
     originalname: String,
     mimetype: String,
     url: String,
-    size: Number
+    size: Number,
+    cover_image: cropSchema,
   },
   creation_timestamp: {
     type: Number,
@@ -35,7 +36,7 @@ export const mediaSchema = new Schema({
   status: String,
   number_of_changes: { type: Number, default: 0 },
   data: {
-    cover_image: cropSchema,
+    mp4: cropSchema,
     '1x1': cropSchema,
     '1x2': cropSchema,
     '3x1': cropSchema,

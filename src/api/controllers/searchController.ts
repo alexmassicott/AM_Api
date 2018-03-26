@@ -1,4 +1,3 @@
-
 import * as _ from 'lodash'
 import { Posts } from '../models/Posts'
 import { IPost } from '../interfaces/ipost'
@@ -7,22 +6,17 @@ import { Response, Request } from 'express'
 // ////////////
 async function getsearch (req: Request): Promise<any> {
   const query: any[] = req.query.query.split(',')
-  let queryItems: any[] = []
+  const queryItems: any[] = []
   let result: any[]
-  let result2: any[]
-  let posts: IPost[]
+  let result2: IPost[]
+  let posts: string[]
 
-  result = await Tags.batchGet(
-    query.map((i) => ({ name: i }))
-  )
+  result = await Tags.find({ name: { $in: query } })
   posts = _.intersection(...result.map((j) => j.posts))
-  result2 = await Posts.batchGet(
-    posts.map((id) => ({ id }))
-  )
-  queryItems = queryItems.concat(result2)
+  result2 = await Posts.find({ id: { $in: posts } })
 
   // done();
-  return queryItems
+  return result2
 }
 
 export async function get_search (req: Request, res: Response): Promise<any> {

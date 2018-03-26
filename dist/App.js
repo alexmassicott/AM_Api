@@ -28,9 +28,8 @@ class App {
     init() {
         this.jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
         this.jwtOptions.secretOrKey = process.env.SECRET;
-        const strategy = new JwtStrategy(this.jwtOptions, ((jwt_payload, next) => {
+        const strategy = new JwtStrategy(this.jwtOptions, (jwt_payload, next) => {
             // usually this would be a database call:
-            console.log(jwt_payload);
             User_1.User.findOne({ username: jwt_payload.user }).then((user) => {
                 if (user) {
                     next(null, _.pick(user, ['username', 'role']));
@@ -39,7 +38,7 @@ class App {
                     next(null, false);
                 }
             });
-        }));
+        });
         passport.use(strategy);
         this.express.use(passport.initialize());
     }

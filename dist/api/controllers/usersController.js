@@ -9,7 +9,9 @@ jwtOptions.secretOrKey = process.env.SECRET;
 function list_all_users(req, res) { }
 exports.list_all_users = list_all_users;
 function create_user(req, res) {
-    User_1.User.create({ username: req.body.username, password: req.body.password })
+    const user = new User_1.User({ username: req.body.username, password: req.body.password });
+    user
+        .save()
         .then(() => {
         res.json({ status: 'success' });
     })
@@ -21,7 +23,7 @@ exports.create_user = create_user;
 function authenticate(req, res, next) {
     const username = req.body.username;
     const password = req.body.password;
-    User_1.User.get({ username }).then((user) => {
+    User_1.User.findOne({ username }).then((user) => {
         if (!user) {
             next(new Error("We can't find user in our system"));
         }
