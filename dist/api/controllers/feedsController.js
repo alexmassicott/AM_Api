@@ -2,8 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Posts_1 = require("../models/Posts");
 function getfeeds(req, res, next) {
-    Posts_1.Posts.find({ type: { $in: req.body.feed }, publication_status: 'live' })
+    Posts_1.Posts.find({ type: { $in: req.query.feed }, publication_status: 'live' })
         .sort({ creation_timestamp: -1 })
+        .populate('list_of_media')
         .exec()
         .then((posts) => {
         res.json({ status: 'success', data: { posts } });

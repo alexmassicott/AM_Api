@@ -8,5 +8,5 @@ const schema = new mongoose_1.Schema({
     creation_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) },
     edit_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) }
 });
-exports.User = mongoose_1.model('users', schema);
+exports.User = mongoose_1.model('Users', schema, 'Users');
 //# sourceMappingURL=User.js.map

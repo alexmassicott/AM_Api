@@ -11,4 +11,4 @@ export const tagSchema = new Schema({
   creation_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) }
 })
 
-export const Tags: Model<ITag> = model<ITag>('Tags', tagSchema)
+export const Tags: Model<ITag> = model<ITag>('Tags', tagSchema, 'Tags')

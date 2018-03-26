@@ -1,5 +1,4 @@
-
-import { Document, Schema, Model, model} from "mongoose";
+import { Document, Schema, Model, model } from 'mongoose'
 import { IUser } from '../interfaces/iuser'
 
 const schema = new Schema({
@@ -10,4 +9,4 @@ const schema = new Schema({
   edit_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) }
 })
 
-export const User:Model<IUser> = model<IUser>('users', schema)
+export const User: Model<IUser> = model<IUser>('Users', schema, 'Users')

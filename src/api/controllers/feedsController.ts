@@ -5,8 +5,9 @@ import { mapOrder } from '../utils/mapOrder'
 import { IPost } from '../interfaces/ipost'
 
 function getfeeds (req: any, res: any, next: any): void {
-  Posts.find({ type: { $in: req.body.feed }, publication_status: 'live' })
+  Posts.find({ type: { $in: req.query.feed }, publication_status: 'live' })
     .sort({ creation_timestamp: -1 })
+    .populate('list_of_media')
     .exec()
     .then((posts: IPost[]) => {
       res.json({ status: 'success', data: { posts } })

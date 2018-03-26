@@ -1,9 +1,8 @@
-
 import * as passport from 'passport'
 import * as todoList from '../controllers/postsController'
 
 export default function (app) {
-  app.get('/posts/show.json',todoList.show_posts)
+  app.get('/posts/show.json', passport.authenticate('jwt', { session: false }), todoList.show_posts)
 
   app.post('/posts/update.json', passport.authenticate('jwt', { session: false }), todoList.update_a_post)
 

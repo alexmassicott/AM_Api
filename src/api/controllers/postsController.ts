@@ -42,7 +42,7 @@ function get_a_type (req, res, next): void {
       const response = {
         status: 'success',
         data: {
-          more_available: query.hasNext(),
+          more_available: false,
           number_of_posts_returned: items.length,
           posts: items
         }

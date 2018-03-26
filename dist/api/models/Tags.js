@@ -10,5 +10,5 @@ exports.tagSchema = new mongoose_1.Schema({
     posts: { type: [String] },
     creation_timestamp: { type: Number, default: Math.floor(Date.now() / 1000) }
 });
-exports.Tags = mongoose_1.model('Tags', exports.tagSchema);
+exports.Tags = mongoose_1.model('Tags', exports.tagSchema, 'Tags');
 //# sourceMappingURL=Tags.js.map
