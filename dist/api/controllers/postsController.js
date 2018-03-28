@@ -11,8 +11,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
 const errorconstants_1 = require("../constants/errorconstants");
-const setTags = require('../utils/updatetags');
-const uuid = require('uuid4');
 function get_a_post(req, res, next) {
     const id = req.query.id;
     Posts_1.Posts.findById(id)
@@ -77,6 +75,12 @@ function getUpdatepostParams(body, post) {
     }
     if (body.new_publication_status) {
         post.publication_status = body.new_publication_status;
+    }
+    if (body.new_list_of_tags) {
+        post.list_of_tags = body.new_list_of_tags;
+    }
+    if (body.new_list_of_media) {
+        post.list_of_media = body.new_list_of_media;
     }
     if (body.new_featured === true || body.new_featured === false) {
         post.featured = body.new_featured;

@@ -16,6 +16,7 @@ const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
 const mediautils_1 = require("../utils/mediautils");
 const errorconstants_1 = require("../constants/errorconstants");
+const S3FS = require('s3fs');
 const gm = require('gm').subClass({
     imageMagick: true
 });
@@ -25,6 +26,17 @@ const bucketName = 'alexmassbucket';
 let pathParams, image, imageName, srcKey, typeMatch, filetype;
 const srcBucket = bucketName;
 const dstBucket = `${bucketName}-output`;
+const s3Options = {
+    accessKeyId: process.env.accessKeyId,
+    secretAccessKey: process.env.secretAccessKey,
+    region: 'us-east-1'
+};
+const fsImpl = new S3FS(dstBucket, s3Options);
+fsImpl.writeFile('message.txt', 'Hello Node').then(() => {
+    console.log("It's saved!");
+}, (reason) => {
+    throw reason;
+});
 // /////////////////////////////////////////
 function cropImage(req, res, next) {
     let cropdata;

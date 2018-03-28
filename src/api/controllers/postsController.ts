@@ -4,8 +4,6 @@ import { Request, Response } from 'express'
 import { PERMISSION_ERROR } from '../constants/errorconstants'
 import { IPost } from '../interfaces/ipost'
 import { IPostMedia } from '../interfaces/ipostmedia'
-const setTags = require('../utils/updatetags')
-const uuid = require('uuid4')
 
 function get_a_post (req, res, next): void {
   const id = req.query.id
@@ -26,7 +24,7 @@ function get_a_post (req, res, next): void {
     })
 }
 
-async function get_a_type (req, res, next): void {
+async function get_a_type (req, res, next): Promise<void> {
   const type = req.query.type
   const count = await Posts.find({ type }).count()
   const offset = req.query.offset ? parseInt(req.query.offset) : 0
@@ -73,6 +71,12 @@ function getUpdatepostParams (body: any, post: any): void {
   }
   if (body.new_publication_status) {
     post.publication_status = body.new_publication_status
+  }
+  if (body.new_list_of_tags) {
+    post.list_of_tags = body.new_list_of_tags
+  }
+  if (body.new_list_of_media) {
+    post.list_of_media = body.new_list_of_media
   }
   if (body.new_featured === true || body.new_featured === false) {
     post.featured = body.new_featured
