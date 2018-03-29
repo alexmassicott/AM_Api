@@ -40,29 +40,30 @@ export async function updateOriginalData (_id: string, _status: string, file: an
 }
 
 export async function updateVideoData (req, res, next) {
-  console.log(req.files)
-  const mp4FileName = `/media/${req.body.id}.mp4`
+  const mp4FileName = `${req.body.id}.mp4`
   try {
     const inStream = streamifier.createReadStream(req.files.file_data[0].buffer)
 
     const command = FluentFfmpeg(inStream)
     command
-      .toFormat('mp4')
-      .saveToFile(`./protected/${mp4FileName}`)
+      .videoCodec('libx264')
+      .audioCodec('aac')
+      .format('mp4')
+      .save(`./protected/media/${mp4FileName}`)
       .on('end', () => {
         console.log('ended converting')
         // Provide `ReadableStream` of new video as `Body` for `pubObject`
         const params = {
-          Body: fs.createReadStream(`./protected/${mp4FileName}`),
+          Body: fs.createReadStream(`./protected/media/${mp4FileName}`),
           Bucket: dstBucket,
-          Key: mp4FileName
+          Key: `media/${mp4FileName}`
         }
 
         s3.putObject(params, async (err, data) => {
           if (err) throw err
           console.log('success with updateVideoData')
           const media = await getFullMedia(req.body.id)
-          media.data.mp4.url = mp4FileName
+          media.data.mp4.url = `media/${mp4FileName}`
           media.data.mp4.size = 299
           media.save()
           res.json({ status: 'success' })
