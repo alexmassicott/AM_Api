@@ -41,11 +41,12 @@ function cropImage (req, res, next) {
                 Bucket: srcBucket,
                 Key: srcKey
               },
-              next
+              next2
             )
             console.timeEnd('downloadImage')
           },
           function processImage (response, next2) {
+            console.log('change clothes')
             const cropdataparse = req.body.crop_data.split(',')
             const x = parseInt(cropdataparse[0])
             const y = parseInt(cropdataparse[1])
@@ -123,27 +124,10 @@ function updatemedia (req: Request, res: Response, next: any): void {
   const url = `${'images/' + `${imageName}` + '.'}${filetype}`
   const metadata = _.pick(req.files.file_data[0], ['originalname', 'size', 'mimetype', 'encoding'])
   metadata.url = url
+  console.log(req.body.type)
+  if (req.body.type == 'image' || req.body.type == 'cover_image') {
+    console.log('image breh')
 
-  if (req.body.type == 'image') {
-    tinify.fromBuffer(req.files.file_data[0].buffer).toBuffer((err, resultData) => {
-      if (err) next(err)
-      const s3params = {
-        Bucket: bucketName,
-        Key: url,
-        Body: resultData,
-        ContentType: `image/${filetype}`
-      }
-      s3.putObject(s3params, (err, data) => {
-        if (err) next(err)
-        try {
-          updateOriginalData(req.body.id, 'complete', metadata)
-          res.json({ status: 'success' })
-        } catch (err) {
-          next(err)
-        }
-      })
-    })
-  } else if (req.body.type == 'video') {
     const s3params = {
       Bucket: bucketName,
       Key: url,
@@ -153,12 +137,15 @@ function updatemedia (req: Request, res: Response, next: any): void {
     s3.putObject(s3params, (err, data) => {
       if (err) next(err)
       try {
-        updateVideoData(req, 'complete', metadata)
+        updateOriginalData(req.body.id, 'complete', metadata)
         res.json({ status: 'success' })
       } catch (err) {
         next(err)
       }
     })
+  } else if (req.body.type == 'video') {
+    console.log('video breh')
+    updateVideoData(req, res, next)
   }
 }
 
@@ -179,31 +166,22 @@ async function cropmedia (req: Request, res: Response, next: any): Promise<void>
 
 async function createmedia (req: Request, res: Response, next: any): Promise<any> {
   const postid = req.body.post_id
-  const mediaid = uuid().replace(/-/g, '')
   const timestamp = Date.now() / 1000
-  const mediaobj = {
-    id: mediaid,
-    post_id: postid,
-    creation_timestamp: timestamp,
-    edit_timestamp: timestamp,
-    status: 'new',
-    number_of_changes: 0,
-    data: {
-      status: 'new'
-    }
-  }
 
   try {
-    const data = await getPostLom(postid)
-    const list_of_media = data.list_of_media
-    list_of_media.push(mediaobj)
-    Posts.update({ id: postid }, { list_of_media })
-      .then(() => Promise.resolve(Media.create(mediaobj)))
+    const media = new Media({ post_id: postid })
+    media.save()
+    Posts.findById(postid)
+      .select('list_of_media')
+      .then((post) => {
+        post.list_of_media.push(media._id)
+        Promise.resolve(post.save())
+      })
       .then(() => {
         res.json({
           status: 'success',
           data: {
-            id: mediaid
+            id: media._id
           }
         })
       })

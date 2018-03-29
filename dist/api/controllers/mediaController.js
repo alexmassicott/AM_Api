@@ -16,7 +16,6 @@ const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
 const mediautils_1 = require("../utils/mediautils");
 const errorconstants_1 = require("../constants/errorconstants");
-const S3FS = require('s3fs');
 const gm = require('gm').subClass({
     imageMagick: true
 });
@@ -26,17 +25,6 @@ const bucketName = 'alexmassbucket';
 let pathParams, image, imageName, srcKey, typeMatch, filetype;
 const srcBucket = bucketName;
 const dstBucket = `${bucketName}-output`;
-const s3Options = {
-    accessKeyId: process.env.accessKeyId,
-    secretAccessKey: process.env.secretAccessKey,
-    region: 'us-east-1'
-};
-const fsImpl = new S3FS(dstBucket, s3Options);
-fsImpl.writeFile('message.txt', 'Hello Node').then(() => {
-    console.log("It's saved!");
-}, (reason) => {
-    throw reason;
-});
 // /////////////////////////////////////////
 function cropImage(req, res, next) {
     let cropdata;
@@ -49,10 +37,11 @@ function cropImage(req, res, next) {
                 s3_1.s3.getObject({
                     Bucket: srcBucket,
                     Key: srcKey
-                }, next);
+                }, next2);
                 console.timeEnd('downloadImage');
             },
             function processImage(response, next2) {
+                console.log('change clothes');
                 const cropdataparse = req.body.crop_data.split(',');
                 const x = parseInt(cropdataparse[0]);
                 const y = parseInt(cropdataparse[1]);
@@ -124,30 +113,9 @@ function updatemedia(req, res, next) {
     const url = `${'images/' + `${imageName}` + '.'}${filetype}`;
     const metadata = _.pick(req.files.file_data[0], ['originalname', 'size', 'mimetype', 'encoding']);
     metadata.url = url;
-    if (req.body.type == 'image') {
-        tinify.fromBuffer(req.files.file_data[0].buffer).toBuffer((err, resultData) => {
-            if (err)
-                next(err);
-            const s3params = {
-                Bucket: bucketName,
-                Key: url,
-                Body: resultData,
-                ContentType: `image/${filetype}`
-            };
-            s3_1.s3.putObject(s3params, (err, data) => {
-                if (err)
-                    next(err);
-                try {
-                    mediautils_1.updateOriginalData(req.body.id, 'complete', metadata);
-                    res.json({ status: 'success' });
-                }
-                catch (err) {
-                    next(err);
-                }
-            });
-        });
-    }
-    else if (req.body.type == 'video') {
+    console.log(req.body.type);
+    if (req.body.type == 'image' || req.body.type == 'cover_image') {
+        console.log('image breh');
         const s3params = {
             Bucket: bucketName,
             Key: url,
@@ -158,13 +126,17 @@ function updatemedia(req, res, next) {
             if (err)
                 next(err);
             try {
-                mediautils_1.updateVideoData(req, 'complete', metadata);
+                mediautils_1.updateOriginalData(req.body.id, 'complete', metadata);
                 res.json({ status: 'success' });
             }
             catch (err) {
                 next(err);
             }
         });
+    }
+    else if (req.body.type == 'video') {
+        console.log('video breh');
+        mediautils_1.updateVideoData(req, res, next);
     }
 }
 function cropmedia(req, res, next) {
@@ -189,30 +161,21 @@ function cropmedia(req, res, next) {
 function createmedia(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const postid = req.body.post_id;
-        const mediaid = uuid().replace(/-/g, '');
         const timestamp = Date.now() / 1000;
-        const mediaobj = {
-            id: mediaid,
-            post_id: postid,
-            creation_timestamp: timestamp,
-            edit_timestamp: timestamp,
-            status: 'new',
-            number_of_changes: 0,
-            data: {
-                status: 'new'
-            }
-        };
         try {
-            const data = yield mediautils_1.getPostLom(postid);
-            const list_of_media = data.list_of_media;
-            list_of_media.push(mediaobj);
-            Posts_1.Posts.update({ id: postid }, { list_of_media })
-                .then(() => Promise.resolve(MediaObjects_1.Media.create(mediaobj)))
+            const media = new MediaObjects_1.Media({ post_id: postid });
+            media.save();
+            Posts_1.Posts.findById(postid)
+                .select('list_of_media')
+                .then((post) => {
+                post.list_of_media.push(media._id);
+                Promise.resolve(post.save());
+            })
                 .then(() => {
                 res.json({
                     status: 'success',
                     data: {
-                        id: mediaid
+                        id: media._id
                     }
                 });
             });

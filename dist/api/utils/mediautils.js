@@ -8,10 +8,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-/* Expressions for AWS
-*/
+const s3_1 = require("../config/s3");
 const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
+const fs = require('fs');
+const FluentFfmpeg = require('fluent-ffmpeg');
+const ffmpeg = require('@ffmpeg-installer/ffmpeg');
+const streamifier = require('streamifier');
+FluentFfmpeg.setFfmpegPath(ffmpeg.path);
+const dstBucket = 'alexmassbucket-output';
 function getPostLom(post_id) {
     return __awaiter(this, void 0, void 0, function* () {
         const lom = yield Posts_1.Posts.findById(post_id)
@@ -49,6 +54,42 @@ function updateOriginalData(_id, _status, file) {
     });
 }
 exports.updateOriginalData = updateOriginalData;
-function updateVideoData(req) { }
+function updateVideoData(req, res, next) {
+    return __awaiter(this, void 0, void 0, function* () {
+        console.log(req.files);
+        const mp4FileName = `/media/${req.body.id}.mp4`;
+        try {
+            const inStream = streamifier.createReadStream(req.files.file_data[0].buffer);
+            const command = FluentFfmpeg(inStream);
+            command
+                .toFormat('mp4')
+                .saveToFile(`./protected/${mp4FileName}`)
+                .on('end', () => {
+                console.log('ended converting');
+                // Provide `ReadableStream` of new video as `Body` for `pubObject`
+                const params = {
+                    Body: fs.createReadStream(`./protected/${mp4FileName}`),
+                    Bucket: dstBucket,
+                    Key: mp4FileName
+                };
+                s3_1.s3.putObject(params, (err, data) => __awaiter(this, void 0, void 0, function* () {
+                    if (err)
+                        throw err;
+                    console.log('success with updateVideoData');
+                    const media = yield getFullMedia(req.body.id);
+                    media.data.mp4.url = mp4FileName;
+                    media.data.mp4.size = 299;
+                    media.save();
+                    res.json({ status: 'success' });
+                }));
+            });
+        }
+        catch (err) {
+            console.log('errror');
+            console.log(err);
+            next(err);
+        }
+    });
+}
 exports.updateVideoData = updateVideoData;
 //# sourceMappingURL=mediautils.js.map

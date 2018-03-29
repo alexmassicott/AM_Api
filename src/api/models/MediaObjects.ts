@@ -15,7 +15,7 @@ const cropSchema = {
 }
 
 const mediaSchema = new Schema({
-  id: { type: String, required: true },
+  id: { type: String },
   post_id: String,
   original_data: {
     originalname: String,

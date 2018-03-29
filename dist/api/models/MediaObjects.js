@@ -14,7 +14,7 @@ const cropSchema = {
     url: { type: String }
 };
 const mediaSchema = new mongoose_1.Schema({
-    id: { type: String, required: true },
+    id: { type: String },
     post_id: String,
     original_data: {
         originalname: String,

@@ -14,6 +14,7 @@
   "author": "Alexander  Massicott Jr <bxgoods@aol.com>",
   "license": "ISC",
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.0.13",
     "@types/node": "7.0.22",
     "async": "^2.6.0",
     "body-parser": "^1.18.2",
@@ -31,6 +32,8 @@
     "passport": "^0.4.0",
     "passport-jwt": "^3.0.1",
     "s3fs": "^2.5.0",
+    "stream-buffers": "^3.0.1",
+    "streamifier": "^0.1.1",
     "tinify": "^1.5.0",
     "uuid4": "^1.0.0"
   },
