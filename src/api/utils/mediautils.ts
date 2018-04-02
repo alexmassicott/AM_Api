@@ -42,19 +42,8 @@ export async function updateOriginalData (_id: string, _status: string, file: an
 export async function updateVideoData (req, res, next) {
   const mp4FileName = `${req.body.id}.mp4`
   try {
-    const inStream = streamifier.createReadStream(req.files.file_data[0].buffer)
-
-    const command = FluentFfmpeg(inStream)
-    command
-      .videoCodec('libx264')
-      .audioCodec('aac')
-      .format('mp4')
-      .save(`./protected/media/${mp4FileName}`)
-      .on('end', () => {
-        console.log('ended converting')
-        // Provide `ReadableStream` of new video as `Body` for `pubObject`
         const params = {
-          Body: fs.createReadStream(`./protected/media/${mp4FileName}`),
+          Body: req.files.file_data[0].buffer,
           Bucket: dstBucket,
           Key: `media/${mp4FileName}`
         }
@@ -63,8 +52,10 @@ export async function updateVideoData (req, res, next) {
           if (err) throw err
           console.log('success with updateVideoData')
           const media = await getFullMedia(req.body.id)
+          media.data.mp4.status='uploaded'
+          media.type='video'
           media.data.mp4.url = `media/${mp4FileName}`
-          media.data.mp4.size = 299
+          media.data.mp4.size = req.files.file_data[0].size
           media.save()
           res.json({ status: 'success' })
         })
