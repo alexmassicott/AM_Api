@@ -1,9 +1,10 @@
-import { Document } from "mongoose";
+import { Document } from 'mongoose'
 
-export interface IPostMedia extends Document{
+export interface IPostMedia extends Document {
 	id: string
 	post_id: string
 	creation_timestamp: number
+	type: string
 	edit_timestamp: number
 	original_data: any
 	status: string

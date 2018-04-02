@@ -52,7 +52,6 @@ exports.updateOriginalData = updateOriginalData;
 function updateVideoData(req, res, next) {
     return __awaiter(this, void 0, void 0, function* () {
         const mp4FileName = `${req.body.id}.mp4`;
-        console.log(req.files.file_data[0]);
         try {
             const params = {
                 Body: req.files.file_data[0].buffer,
@@ -64,6 +63,8 @@ function updateVideoData(req, res, next) {
                     throw err;
                 console.log('success with updateVideoData');
                 const media = yield getFullMedia(req.body.id);
+                media.data.mp4.status = 'uploaded';
+                media.type = 'video';
                 media.data.mp4.url = `media/${mp4FileName}`;
                 media.data.mp4.size = req.files.file_data[0].size;
                 media.save();
@@ -71,6 +72,7 @@ function updateVideoData(req, res, next) {
             }));
         }
         catch (err) {
+            console.log('errror');
             console.log(err);
             next(err);
         }

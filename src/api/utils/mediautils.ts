@@ -2,11 +2,6 @@ import { s3 } from '../config/s3'
 import { Posts } from '../models/Posts'
 import { IPostMedia } from '../interfaces/ipostmedia'
 import { Media } from '../models/MediaObjects'
-const fs = require('fs')
-const FluentFfmpeg = require('fluent-ffmpeg')
-const ffmpeg = require('@ffmpeg-installer/ffmpeg')
-const streamifier = require('streamifier')
-FluentFfmpeg.setFfmpegPath(ffmpeg.path)
 const dstBucket = 'alexmassbucket-output'
 export async function getPostLom (post_id): Promise<any> {
   const lom = await Posts.findById(post_id)
@@ -42,24 +37,23 @@ export async function updateOriginalData (_id: string, _status: string, file: an
 export async function updateVideoData (req, res, next) {
   const mp4FileName = `${req.body.id}.mp4`
   try {
-        const params = {
-          Body: req.files.file_data[0].buffer,
-          Bucket: dstBucket,
-          Key: `media/${mp4FileName}`
-        }
+    const params = {
+      Body: req.files.file_data[0].buffer,
+      Bucket: dstBucket,
+      Key: `media/${mp4FileName}`
+    }
 
-        s3.putObject(params, async (err, data) => {
-          if (err) throw err
-          console.log('success with updateVideoData')
-          const media = await getFullMedia(req.body.id)
-          media.data.mp4.status='uploaded'
-          media.type='video'
-          media.data.mp4.url = `media/${mp4FileName}`
-          media.data.mp4.size = req.files.file_data[0].size
-          media.save()
-          res.json({ status: 'success' })
-        })
-      })
+    s3.putObject(params, async (err, data) => {
+      if (err) throw err
+      console.log('success with updateVideoData')
+      const media = await getFullMedia(req.body.id)
+      media.data.mp4.status = 'uploaded'
+      media.type = 'video'
+      media.data.mp4.url = `media/${mp4FileName}`
+      media.data.mp4.size = req.files.file_data[0].size
+      media.save()
+      res.json({ status: 'success' })
+    })
   } catch (err) {
     console.log('errror')
     console.log(err)

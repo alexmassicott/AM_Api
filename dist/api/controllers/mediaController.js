@@ -16,9 +16,7 @@ const Posts_1 = require("../models/Posts");
 const MediaObjects_1 = require("../models/MediaObjects");
 const mediautils_1 = require("../utils/mediautils");
 const errorconstants_1 = require("../constants/errorconstants");
-const gm = require('gm').subClass({
-    imageMagick: true
-});
+const gm = require('gm').subClass({ imageMagick: true });
 const uuid = require('uuid4');
 tinify.key = process.env.TINIFY_KEY;
 const bucketName = 'alexmassbucket';
@@ -31,17 +29,17 @@ function cropImage(req, res, next) {
     const _sizeArray = [req.body.crop_ratio];
     async.forEachOf(_sizeArray, (value, key, cb) => {
         console.log(value);
+        console.log(srcKey);
         async.waterfall([
             function download(next2) {
                 console.time('downloadImage');
                 s3_1.s3.getObject({
-                    Bucket: srcBucket,
+                    Bucket: bucketName,
                     Key: srcKey
                 }, next2);
                 console.timeEnd('downloadImage');
             },
             function processImage(response, next2) {
-                console.log('change clothes');
                 const cropdataparse = req.body.crop_data.split(',');
                 const x = parseInt(cropdataparse[0]);
                 const y = parseInt(cropdataparse[1]);
@@ -50,8 +48,11 @@ function cropImage(req, res, next) {
                 gm(response.Body, `${imageName}.${filetype}`)
                     .crop(width, height, x, y)
                     .toBuffer(filetype.toUpperCase(), (err, buffer) => {
-                    if (err)
+                    if (err) {
+                        console.log('errrrrrorr');
                         return next(err);
+                    }
+                    console.log('here dawg');
                     tinify.fromBuffer(buffer).toBuffer((err, resultData) => {
                         if (err)
                             next(err);
@@ -113,7 +114,6 @@ function updatemedia(req, res, next) {
     const url = `${'images/' + `${imageName}` + '.'}${filetype}`;
     const metadata = _.pick(req.files.file_data[0], ['originalname', 'size', 'mimetype', 'encoding']);
     metadata.url = url;
-    console.log(req.body.type);
     if (req.body.type == 'image' || req.body.type == 'cover_image') {
         console.log('image breh');
         const s3params = {
@@ -122,17 +122,19 @@ function updatemedia(req, res, next) {
             Body: req.files.file_data[0].buffer,
             ContentType: `image/${filetype}`
         };
-        s3_1.s3.putObject(s3params, (err, data) => {
+        s3_1.s3.putObject(s3params, (err, data) => __awaiter(this, void 0, void 0, function* () {
             if (err)
                 next(err);
             try {
-                mediautils_1.updateOriginalData(req.body.id, 'complete', metadata);
+                const response = yield mediautils_1.updateOriginalData(req.body.id, 'complete', metadata);
+                console.log('succeess');
                 res.json({ status: 'success' });
             }
             catch (err) {
+                console.log('error uploading');
                 next(err);
             }
-        });
+        }));
     }
     else if (req.body.type == 'video') {
         console.log('video breh');

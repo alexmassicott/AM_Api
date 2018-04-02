@@ -8,11 +8,8 @@ import { Media } from '../models/MediaObjects'
 import { updateOriginalData, getFullMedia, updateCropData, getPostLom, updateVideoData } from '../utils/mediautils'
 import { Response, Request } from 'express'
 import { PERMISSION_ERROR } from '../constants/errorconstants'
-const gm = require('gm').subClass({
-  imageMagick: true
-})
+const gm = require('gm').subClass({ imageMagick: true })
 const uuid = require('uuid4')
-
 tinify.key = process.env.TINIFY_KEY
 const bucketName = 'alexmassbucket'
 let pathParams,
@@ -24,6 +21,7 @@ let pathParams,
 const srcBucket = bucketName
 const dstBucket = `${bucketName}-output`
 // /////////////////////////////////////////
+
 function cropImage (req, res, next) {
   let cropdata
   const _sizeArray = [req.body.crop_ratio]
@@ -32,13 +30,14 @@ function cropImage (req, res, next) {
     _sizeArray,
     (value, key, cb) => {
       console.log(value)
+      console.log(srcKey)
       async.waterfall(
         [
           function download (next2) {
             console.time('downloadImage')
             s3.getObject(
               {
-                Bucket: srcBucket,
+                Bucket: bucketName,
                 Key: srcKey
               },
               next2
@@ -46,7 +45,6 @@ function cropImage (req, res, next) {
             console.timeEnd('downloadImage')
           },
           function processImage (response, next2) {
-            console.log('change clothes')
             const cropdataparse = req.body.crop_data.split(',')
             const x = parseInt(cropdataparse[0])
             const y = parseInt(cropdataparse[1])
@@ -55,8 +53,11 @@ function cropImage (req, res, next) {
             gm(response.Body, `${imageName}.${filetype}`)
               .crop(width, height, x, y)
               .toBuffer(filetype.toUpperCase(), (err, buffer) => {
-                if (err) return next(err)
-
+                if (err) {
+                  console.log('errrrrrorr')
+                  return next(err)
+                }
+                console.log('here dawg')
                 tinify.fromBuffer(buffer).toBuffer((err, resultData) => {
                   if (err) next(err)
 
@@ -124,22 +125,22 @@ function updatemedia (req: Request, res: Response, next: any): void {
   const url = `${'images/' + `${imageName}` + '.'}${filetype}`
   const metadata = _.pick(req.files.file_data[0], ['originalname', 'size', 'mimetype', 'encoding'])
   metadata.url = url
-  console.log(req.body.type)
   if (req.body.type == 'image' || req.body.type == 'cover_image') {
     console.log('image breh')
-
     const s3params = {
       Bucket: bucketName,
       Key: url,
       Body: req.files.file_data[0].buffer,
       ContentType: `image/${filetype}`
     }
-    s3.putObject(s3params, (err, data) => {
+    s3.putObject(s3params, async (err, data) => {
       if (err) next(err)
       try {
-        updateOriginalData(req.body.id, 'complete', metadata)
+        const response = await updateOriginalData(req.body.id, 'complete', metadata)
+        console.log('succeess')
         res.json({ status: 'success' })
       } catch (err) {
+        console.log('error uploading')
         next(err)
       }
     })
